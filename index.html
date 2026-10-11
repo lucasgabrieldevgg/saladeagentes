@@ -622,7 +622,7 @@ async function openSala(codeRaw,eu){
  }
  if(eu){S.eu=eu;store.set('sa_sess',JSON.stringify(Object.assign({c:code},eu)))}
  salaRef=db.ref('boxes/'+code);
- if(!ligado){salaRef.on('value',s=>{const val=s.val();if(!val){salaOff();ver('v-fim');$('#fim-t').textContent='esta sala saiu do ar';$('#fim-sub').textContent='foi apagada do banco (limpeza de inatividade).';return}S.sala=val;renderSala()});ligado=true}
+ if(!ligado){salaRef.on('value',s=>{const val=s.val();if(!val){salaOff();store.del('sa_sess');S.sala=null;S.code=null;S.eu=null;S.linksSessao=[];ver('v-fim');$('#fim-t').textContent='esta sala saiu do ar';$('#fim-sub').textContent='foi apagada do banco (limpeza de inatividade).';return}S.sala=val;renderSala()});ligado=true}
  $('#top-nome').textContent=S.sala.nome||'Sala de Agentes';
  $('#top-code').textContent='· '+PZ.fmtCodigo(code);
  ver('v-sala');renderSala();
@@ -789,7 +789,8 @@ function limpaAnexo(){S.anexo=null;$('#in-anexo').value='';const n=$('#anexo-nom
 
 /* ── enviar ── */
 async function enviar(){
- if(!S.eu||!S.sala)return;
+ if(!S.sala)return;
+ if(!S.eu)return toast('tu só tá de olhada aqui — entra por um link de convite da sala pra participar');
  const c=S.refs||{};
  const refsNoEnvio=S.refs;
  const tipo=S.tipo;
@@ -930,7 +931,11 @@ function abreIA(){
 }
 $('#btn-ia').onclick=()=>{S.iaFrom='v-join';abreIA()};
 $('#btn-modoria').onclick=()=>{S.iaFrom='v-sala';$('#m-links').hidden=true;abreIA()};
-$('#ia-voltar').onclick=()=>{if(S.iaFrom==='v-sala'&&S.sala){ver('v-sala')}else{ver('v-join')}};
+$('#ia-voltar').onclick=()=>{
+ if(S.iaFrom==='v-sala'&&S.sala){ver('v-sala')}
+ else if(S.joinCode&&S.joinPapel){ver('v-join')}
+ else{ver('v-home');renderMinhas();renderCaixas()}
+};
 $('#ia-cp-put').onclick=()=>copiar($('#ia-put').textContent);
 $('#ia-cp-get').onclick=()=>copiar($('#ia-get').textContent);
 $('#ia-cp-anexo').onclick=()=>copiar($('#ia-anexo').textContent);
@@ -981,10 +986,11 @@ $('#code-in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefaul
 $('#btn-join').onclick=async()=>{
  const n=PZ.sanitizeNome($('#join-nome').value);
  if(!n)return toast('me diz teu nome');
+ if(!S.joinCode){ver('v-home');renderMinhas();renderCaixas();return toast('faltou o código — abre a sala por um convite')}
+ const papel=S.joinPapel||{tag:'hum',ag:null};
  try{
   $('#btn-join').disabled=true;
-  await openSala(S.joinCode,{nome:n,tag:S.joinPapel.tag,ag:S.joinPapel.ag});
-  const papel=S.joinPapel;
+  await openSala(S.joinCode,{nome:n,tag:papel.tag,ag:papel.ag});
   toast('bem-vindo, '+n+' — entraste como '+PZ.tagLabel(papel.tag,papel.ag));
  }catch(e){if(e.message!=='parado')toast(e.message)}
  $('#btn-join').disabled=false;

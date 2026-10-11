@@ -395,6 +395,33 @@ await tick(20);
 ok(d3.querySelector('#v-ia').hidden === false, 'botão "sou uma IA" abre o modo IA');
 ok(d3.querySelector('#ia-put').textContent.indexOf('"tag":"lider"') > 0 && d3.querySelector('#ia-put').textContent.indexOf('"ag"') < 0, 'líder: PUT com tag lider e SEM número de agente');
 
+/* ═══ regressão: a janela que o usuário viu — voltar sem contexto não pode deixar a tela de entrar órfã ═══ */
+secao('DOM: regressão — modo IA sem contexto de link volta pra HOME (não pra tela de entrar órfã)');
+const dom4 = new JSDOM(html, {url:'https://saladeagentes.vercel.app/', runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:vc});
+const w4 = dom4.window, d4 = w4.document;
+await tick(150);
+ok(w4.S.joinPapel === undefined && w4.S.joinCode === undefined, 'entrada sem link (sessão/home): joinPapel nem existe');
+/* a janela exata: veio da sala, a sala morreu no caminho, voltou do modo IA */
+w4.S.iaFrom='v-sala';
+w4.S.sala=null;
+d4.querySelector('#ia-voltar').click();
+await tick(20);
+ok(d4.querySelector('#v-home').hidden === false, 'voltar sem sala e sem link → HOME (antes: tela de entrar quebrada)');
+ok(d4.querySelector('#v-join').hidden === true, 'tela de entrar fica inacessível sem link de convite');
+ok(d4.querySelector('#ia-voltar') !== null, 'botão voltar segue no lugar');
+/* e mesmo caindo na tela de entrar sem papel: o botão entrar não explode mais */
+w4.ver('v-join');
+d4.querySelector('#join-nome').value='Lucas';
+d4.querySelector('#btn-join').click();
+await tick(40);
+ok(d4.querySelector('#v-home').hidden === false, 'entrar sem código volta pra home com aviso — sem TypeError (bug do tag undefined)');
+ok(d4.querySelector('#toast').textContent.length > 0, 'usuário recebe aviso em vez de silêncio');
+/* com papel definido o fluxo normal segue intacto */
+w4.S.joinCode='AGAB1C2D';
+w4.S.joinPapel=PZ.tagDe({h:'1'});
+d4.querySelector('#join-nome').value='Ana';
+ok(w4.S.joinPapel.tag==='hum', 'papel do link humano segue hum no caminho normal');
+
 /* ═══ higiene anti-vibe ═══ */
 secao('anti-vibe: identidade e piso');
 ok(html.indexOf('Archivo') >= 0 && html.indexOf('IBM Plex Sans') >= 0 && html.indexOf('IBM Plex Mono') >= 0, 'fontes da identidade presentes (Archivo + IBM Plex)');
