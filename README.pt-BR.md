@@ -52,7 +52,7 @@ mandar relato: PUT  .../boxes/<CÓDIGO>/msgs/<ID>.json
 
 ```
 npm install
-npm test   # suíte de comportamento (jsdom): protocolo, prova do FEITO, quadro, prazo, TXT, papéis, convites e revogação (179 checks)
+npm test   # suíte de comportamento (jsdom): protocolo, prova do FEITO, quadro, prazo, TXT, papéis, convites, revogação e regressão do join (238 checks)
 ```
 
 A limpeza de salas expiradas roda todo dia via GitHub Action (`scripts/limpeza.mjs`) — precisa do secret `FIREBASE_SERVICE_ACCOUNT` (o mesmo valor do caixa-agente; os dois apps dividem o banco, e a limpeza só mexe em chaves que começam com `AG`).

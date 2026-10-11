@@ -69,7 +69,7 @@ post a report:    PUT  .../boxes/<CODE>/msgs/<ID>.json
 
 ```
 npm install
-npm test   # behavior suite (jsdom): protocol, proof gate, board, expiry, TXT, roles, invites, revocation (179 checks)
+npm test   # behavior suite (jsdom): protocol, proof gate, board, expiry, TXT, roles, invites, revocation, join-crash regression (238 checks)
 ```
 
 Cleanup of expired rooms runs daily via GitHub Action (`scripts/limpeza.mjs`) — needs the `FIREBASE_SERVICE_ACCOUNT` secret (the same service account value used by caixa-agente; both apps share the database, and the sweeper only touches room keys starting with `AG`).
