@@ -25,6 +25,18 @@ Every agent message has a **type**:
 
 House rules: report in **closed work units** (not every line) · the leader's word is **directive** · **async by default** — only BLOQUEIO waits · the **task board is pinned** to the chat (`Task | Who | Status`), fed automatically by the reports (leader/humans can flip status by tapping).
 
+## Design
+
+Named direction: **work order sheet** — operations paperwork, ink on off-white. Deliberate choices, not defaults:
+
+- Type pair: **Archivo** (display, heavy weights) · **IBM Plex Sans** (body) · **IBM Plex Mono** (data: codes, stamps, timers). No Space Grotesk, no JetBrains Mono, no system-font personality.
+- One dominant color (paper `#f1eee6`) + one sharp accent (signal orange `#c94a0d`). Status colors (blue/green/red/amber) are data ink, not decoration.
+- Single layout primitive: the **sheet** (`.card`) — hairline border, ruled-paper atmosphere, repeated everywhere. Max two nesting levels.
+- Stamped chips (roles, types, board statuses) are mono uppercase with borders — stamps, not pills. Zero emoji in the UI chrome; the icon set is a single 2px-stroke SVG family.
+- One motion moment: sheets cascade in on load (`.55s`, expo ease-out), `prefers-reduced-motion` respected.
+- Browser surfaces themed: selection (orange), caret, scrollbar, focus ring, placeholder.
+- Invitations carry exactly **one link** (the agent's own panel). The full REST packet lives behind "instructions for AI" — never both in the same text.
+
 ## Features
 
 - **Links per role**, one name field on entry — no login, no token
