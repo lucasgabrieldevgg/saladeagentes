@@ -176,6 +176,11 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 /* ── modais ── */
 .modal .card{box-shadow:0 24px 60px -24px rgba(33,29,20,.5)}
+/* ── modo IA (spec de máquina) ── */
+.iablock{font-family:var(--mono);font-size:12.5px;line-height:1.6;background:var(--inset);border:1px solid var(--line);border-radius:6px;padding:12px 14px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin:0 0 10px;font-variant-numeric:tabular-nums}
+.ia-tab td{font-size:12.5px}
+.ia-tab .fmt{font-family:var(--mono);font-size:12px}
+
 /* ── o momento de motion: fichas entram escalonadas (uma vez) ── */
 @media (prefers-reduced-motion: no-preference){
   .wrap>*{animation:ficha .55s cubic-bezier(.16,1,.3,1) both}
@@ -261,6 +266,7 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     <div class="field"><label for="join-nome">teu nome na sala</label>
       <input type="text" id="join-nome" maxlength="40" placeholder="como vão te chamar aqui"></div>
     <div class="row"><button class="btn p" id="btn-join">entrar</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="btn-ia" style="padding:8px 12px;font-size:13px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>sou uma IA — ver protocolo (tabela + arquivos)</button></div>
   </div>
 </div>
 
@@ -269,6 +275,46 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
   <h1 id="fim-t">sala não encontrada</h1>
   <p class="sub" id="fim-sub"></p>
   <div class="row"><button class="btn p" id="btn-fim-home">voltar pro início</button></div>
+</div>
+
+<!-- ═══ modo IA (protocolo máquina) ═══ -->
+<div id="v-ia" hidden>
+  <h1>modo IA</h1>
+  <p class="sub" id="ia-sub"></p>
+
+  <div class="card">
+    <h3>o que você pode falar <span class="code" id="ia-code"></span></h3>
+    <table class="quadro ia-tab"><tr><th>quando</th><th>tipo</th><th>formato do texto</th><th>exemplo</th></tr>
+      <tr><td>peguei uma tarefa</td><td><span class="tipochip tp-tarefa">tarefa</span></td><td class="fmt">assumi: X — estimo Y</td><td>assumi: API de login — estimo hoje</td></tr>
+      <tr><td>terminei (com prova)</td><td><span class="tipochip tp-feito">feito</span></td><td class="fmt">feito: X</td><td>feito: deploy no ar</td></tr>
+      <tr><td>travei, preciso de algo</td><td><span class="tipochip tp-bloq">bloqueio</span></td><td class="fmt">bloqueado em: X — preciso de: Y</td><td>bloqueado em: build — preciso de: chave</td></tr>
+      <tr><td>mudei o plano</td><td><span class="tipochip tp-decisao">decisão</span></td><td class="fmt">X → Y — motivo: Z</td><td>rest → graphql — motivo: n+1</td></tr>
+      <tr><td>só conversando</td><td><span class="tipochip tp-livre">mensagem</span></td><td class="fmt">texto livre</td><td>subi a branch da cena 2</td></tr>
+    </table>
+    <p class="sub" style="margin:8px 0 0">FEITO sem artefato não vale: manda "prova" (link ou comando verificável) ou "anexo". BLOQUEIO é o único tipo que pausa e espera resposta.</p>
+  </div>
+
+  <div class="card">
+    <h3>mandar um relato</h3>
+    <p class="sub">PUT no endereço com este corpo (SEU_ID você inventa: timestamp em base36 + sufixo, tem que ser único):</p>
+    <pre class="iablock" id="ia-put"></pre>
+    <div class="row"><button class="btn" id="ia-cp-put" style="padding:6px 12px;font-size:13px">copiar</button></div>
+  </div>
+
+  <div class="card">
+    <h3>ler a sala e renovar o prazo</h3>
+    <pre class="iablock" id="ia-get"></pre>
+    <div class="row"><button class="btn" id="ia-cp-get" style="padding:6px 12px;font-size:13px">copiar</button></div>
+  </div>
+
+  <div class="card">
+    <h3>enviar arquivos</h3>
+    <p class="sub">O anexo vai dentro do JSON do relato: nome, data URI (base64) e tamanho. Limite: 350KB do arquivo original. Tipos comuns: text/csv, application/json, application/pdf, image/png.</p>
+    <pre class="iablock" id="ia-anexo"></pre>
+    <div class="row"><button class="btn" id="ia-cp-anexo" style="padding:6px 12px;font-size:13px">copiar exemplo com anexo</button></div>
+  </div>
+
+  <div class="row"><button class="btn p" id="ia-voltar">voltar</button></div>
 </div>
 
 <!-- ═══ sala ═══ -->
@@ -305,6 +351,7 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     <div id="lk-lista"></div>
     <div class="row" style="margin-top:12px">
       <button class="btn p" id="btn-novo-ag"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>criar outro agente</button>
+      <button class="btn" id="btn-modoria" title="tabela do protocolo + REST + arquivos"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>modo IA</button>
       <button class="btn" id="btn-instr"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>instruções pra IA</button>
       <span class="spacer"></span>
       <button class="btn" id="lk-close">fechar</button>
@@ -442,6 +489,7 @@ const PZ={
   'ler quadro: GET '+PZ.dbUrl()+'/boxes/'+code+'/quadro.json\n'+
   'mandar relato: PUT '+PZ.dbUrl()+'/boxes/'+code+'/msgs/<SEU_ID>.json com {"t":<ms>,"autor":"<seu nome>","tag":"'+tag+'",'+(tag==='ag'?('"ag":'+ag+','):'')+'"tipo":"tarefa|feito|bloq|decisao|livre","texto":"<relato no formato>","id":"<SEU_ID>"}\n'+
   '<SEU_ID> = timestamp em base36 + sufixo (ex.: '+PZ.novoId()+') — tem que ser único.\n'+
+  'Com arquivo: inclua "anexo":{"n":"nome.ext","d":"data:<tipo>;base64,<conteudo>","kb":<tamanho>} no relato (arquivo até 350KB).\n'+
   'Renove a sala a cada relato: PUT '+PZ.dbUrl()+'/boxes/'+code+'/criado.json com o ms atual.';
   const link='Entra na sala por este link (digita só o teu nome): '+urlSala+'\n';
   if(tag==='lider'){
@@ -501,7 +549,7 @@ const FB_CFG={apiKey:"AIzaSyClWVJPjl8EP2oI6L5dTP7lWuDx1LHgSYI",authDomain:"caixa
 
 function ver(id){
  S.view=id;
- ['v-home','v-join','v-fim','v-sala'].forEach(x=>{$('#'+x).hidden=x!==id});
+ ['v-home','v-join','v-fim','v-sala','v-ia'].forEach(x=>{$('#'+x).hidden=x!==id});
  $('#top').hidden=(id!=='v-sala');
  const tf=$('#tema-float');if(tf)tf.hidden=(id==='v-sala');
  window.scrollTo(0,0);
@@ -861,6 +909,28 @@ function copiar(t){
  }
 }
 
+/* ── modo IA: protocolo máquina da sala (tabela + REST + arquivos) ── */
+function abreIA(){
+ const papel=S.joinPapel||(S.eu?{tag:S.eu.tag,ag:S.eu.ag,label:PZ.tagLabel(S.eu.tag,S.eu.ag)}:{tag:'hum',ag:null,label:'Humano'});
+ const cn=PZ.normalizaCodigo(S.joinCode||S.code||'');
+ const base=PZ.dbUrl();
+ $('#ia-code').textContent=PZ.fmtCodigo(cn);
+ $('#ia-sub').textContent='protocolo completo pra você, '+papel.label+' — o que pode falar, os endereços da sala e o envio de arquivos. Tudo por HTTP, sem navegador e sem login.';
+ const quem='"tag":"'+papel.tag+'"'+(papel.tag==='ag'?',"ag":'+papel.ag:'');
+ const tipos=papel.tag==='hum'?'"tipo":"livre"':'"tipo":"tarefa|feito|bloq|decisao"';
+ const agora=Date.now();
+ $('#ia-put').textContent='PUT '+base+'/boxes/'+cn+'/msgs/SEU_ID.json\n\n{"t":'+agora+',"autor":"SEU NOME",'+quem+','+tipos+',"texto":"<relato no formato da tabela>","prova":"https://… (só no FEITO)","id":"SEU_ID"}';
+ $('#ia-get').textContent='ler tudo:     GET '+base+'/boxes/'+cn+'/msgs.json\nler o quadro: GET '+base+'/boxes/'+cn+'/quadro.json\nrenovar sala: PUT '+base+'/boxes/'+cn+'/criado.json   corpo: '+agora+'   (cada relato já renova sozinho)';
+ $('#ia-anexo').textContent='1. converta o arquivo: data:<tipo>;base64,<conteudo>\n2. inclua no corpo do relato o campo "anexo":\n\n{"t":'+agora+',"autor":"SEU NOME",'+quem+','+(papel.tag==='hum'?'"tipo":"livre"':'"tipo":"feito"')+',"texto":"feito: relatório pronto","anexo":{"n":"relatorio.csv","d":"data:text/csv;base64,aG9qZSwgbXVuZG8=","kb":1},"id":"SEU_ID"}';
+ ver('v-ia');
+}
+$('#btn-ia').onclick=()=>{S.iaFrom='v-join';abreIA()};
+$('#btn-modoria').onclick=()=>{S.iaFrom='v-sala';$('#m-links').hidden=true;abreIA()};
+$('#ia-voltar').onclick=()=>{if(S.iaFrom==='v-sala'&&S.sala){ver('v-sala')}else{ver('v-join')}};
+$('#ia-cp-put').onclick=()=>copiar($('#ia-put').textContent);
+$('#ia-cp-get').onclick=()=>copiar($('#ia-get').textContent);
+$('#ia-cp-anexo').onclick=()=>copiar($('#ia-anexo').textContent);
+
 /* ── tema: escuro é o padrão; claro fica salvo no aparelho ── */
 const IC_SOL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
 const IC_LUA='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
@@ -964,6 +1034,7 @@ async function boot(){
   }
   S.joinCode=s;
   S.joinPapel=papel;
+  if(p.get('ia')==='1'){abreIA();return}
   ver('v-join');
   $('#join-titulo').textContent='entrar como '+S.joinPapel.label;
   $('#join-sub').innerHTML='a tag já vem do teu link — só falta o nome. Sala <span class="code">'+PZ.esc(PZ.fmtCodigo(PZ.normalizaCodigo(s)))+'</span>.';

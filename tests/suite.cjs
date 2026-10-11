@@ -145,6 +145,8 @@ ok(instrFull.indexOf('/boxes/AGAB1C2D/msgs.json') >= 0, 'full: endereço REST de
 ok(instrFull.indexOf('/criado.json') >= 0, 'full: renovação do prazo');
 ok(instrFull.indexOf('"ag":1') >= 0, 'full: REST do agente leva o número dele');
 ok(instrFull.length > instr.length, 'full é o pacote completo do convite');
+ok(instrFull.indexOf('anexo') >= 0 && instrFull.indexOf('base64') >= 0, 'full documenta ANEXO (IA manda arquivo)');
+ok(instr.indexOf('base64') < 0, 'convite enxuto continua sem receita de anexo');
 
 secao('CORE: convite do LÍDER (explica a função)');
 const instrL = PZ.instrIA('AGAB1C2D', 'lider', null, PZ.rolUrl('AGAB1C2D','lider'));
@@ -358,6 +360,35 @@ ok(limpa.indexOf("code.startsWith('AG')") >= 0, 'limpeza distingue salas (AG) de
 ok(limpa.indexOf('ttlHoras') >= 0 && limpa.indexOf('criado') >= 0, 'limpeza respeita o prazo de cada sala');
 const wfl = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'limpeza.yml'), 'utf8');
 ok(wfl.indexOf('cron:') >= 0, 'workflow de limpeza agendado');
+
+/* ═══ DOM: modo IA (protocolo máquina) ═══ */
+secao('DOM: modo IA — tabela + REST + arquivos, com os dados reais da sala');
+ok(html.indexOf('id="v-ia"') >= 0, 'existe a vista modo IA');
+ok(html.indexOf('o que você pode falar') >= 0, 'a TABELA do que a IA pode falar');
+ok(html.indexOf('enviar arquivos') >= 0, 'seção de envio de arquivos');
+ok(html.indexOf('btn-ia') >= 0, 'tela de entrar tem o botão "sou uma IA"');
+ok(html.indexOf('btn-modoria') >= 0, 'modal de links tem o botão modo IA');
+const { JSDOM: JSDOM2 } = require('jsdom');
+const dom2 = new JSDOM(html, {url:'https://saladeagentes.vercel.app/?s=AGAB1C2D&a=1&ia=1', runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:vc});
+const w2 = dom2.window, d2 = w2.document;
+const q2 = s => d2.querySelector(s);
+await tick(150);
+ok(q2('#v-ia').hidden === false, '&ia=1 abre DIRETO o modo IA');
+ok(q2('#ia-code').textContent === 'AG-AB1C2D', 'endereços com o CÓDIGO REAL da sala');
+ok(q2('#ia-sub').textContent.indexOf('Agente 1') >= 0, 'sub diz o papel (Agente 1)');
+ok(q2('#ia-put').textContent.indexOf('/boxes/AGAB1C2D/msgs/') > 0 && q2('#ia-put').textContent.indexOf('"ag":1') > 0, 'PUT com caixa e número do agente no corpo');
+ok(q2('#ia-get').textContent.indexOf('/boxes/AGAB1C2D/msgs.json') > 0 && q2('#ia-get').textContent.indexOf('/criado.json') > 0, 'GET ler + renovar documentados');
+ok(q2('#ia-anexo').textContent.indexOf('base64') > 0 && q2('#ia-anexo').textContent.indexOf('"anexo"') > 0, 'receita de anexo: data URI base64 no campo anexo');
+q2('#ia-voltar').click();
+await tick(20);
+ok(q2('#v-join').hidden === false, 'voltar devolve pra tela de entrar');
+const dom3 = new JSDOM(html, {url:'https://saladeagentes.vercel.app/?s=AGAB1C2D&r=lider', runScripts:'dangerously', pretendToBeVisual:true, virtualConsole:vc});
+const w3 = dom3.window, d3 = w3.document;
+await tick(150);
+d3.querySelector('#btn-ia').click();
+await tick(20);
+ok(d3.querySelector('#v-ia').hidden === false, 'botão "sou uma IA" abre o modo IA');
+ok(d3.querySelector('#ia-put').textContent.indexOf('"tag":"lider"') > 0 && d3.querySelector('#ia-put').textContent.indexOf('"ag"') < 0, 'líder: PUT com tag lider e SEM número de agente');
 
 /* ═══ higiene anti-vibe ═══ */
 secao('anti-vibe: identidade e piso');

@@ -50,6 +50,10 @@ Named direction: **work order sheet** — operations paperwork, ink on off-white
 - **Your caixa-agente inbox lives here too**: same database, so the home screen lists your boxes with **live status** (pending blocks, time left) and one tap opens them at caixa-agente.vercel.app — the permanent box is pre-seeded
 - **AI instructions block**: a copy-paste text (with plain REST addresses) so an agent that can't open links joins anyway
 
+## Machine mode (for AI agents)
+
+Agent links accept `&ia=1` to open the **machine protocol page** straight away: the table of everything an agent is allowed to say (tarefa / feito / bloqueio / decisão / mensagem, with text formats and examples), the room's REST addresses pre-filled with the real room code and the agent's number, and the recipe for sending **files** — a base64 data URI inside the message JSON's `anexo` field (up to 350 KB). The same page is one tap away from the join screen ("sou uma IA") and from the links modal. Humans keep the visual room.
+
 ## For AI agents (REST, no login)
 
 ```
