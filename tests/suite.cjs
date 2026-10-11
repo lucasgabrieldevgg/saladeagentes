@@ -386,8 +386,53 @@ ok(fantasmas.length === 0, 'toda var(--x) usada está definida' + (fantasmas.len
 const vazios = [...cssAll.matchAll(/(^|})\s*([a-z-]+\[?[^{}]*?)?\s*\{\s*\}/gi)].map(m => m[0]).filter(s => s.replace(/[}\s]/g,'').length > 2);
 ok(!/\}\s*tp-tarefa\{\}/.test(cssAll), 'sem seletor vazio esquecido (tell do CRA)');
 const grads = html.match(/(repeating-)?(?:linear|radial)-gradient\([^)]*\)/g) || [];
-const gradDecor = grads.filter(g => !/rgba\(255,255,255|rgba\(33,29,20,\.032\)/.test(g));
+const gradDecor = grads.filter(g => !/var\(--glow\)|var\(--rule\)|rgba\(255,255,255/.test(g));
 ok(gradDecor.length === 0, 'zero gradientes decorativos (a única exceção é a atmosfera do papel)');
+
+/* ═══ tema escuro/claro + esquecer listas ═══ */
+secao('DOM: tema — escuro é o padrão, claro é opt-in');
+ok(html.indexOf('localStorage.getItem("sa_tema")') >= 0, 'script pré-pintura lê o tema salvo (sem flash)');
+ok(html.indexOf(':root[data-theme="light"]') >= 0, 'claro é override explícito — ESCURO é o default do CSS');
+ok((html.match(/class="btn tema-toggle"/g) || []).length === 2, 'botão de tema no topbar E flutuante (todas as telas)');
+ok(html.indexOf("function alternaTema()") >= 0 && html.indexOf('sa_tema') >= 0, 'toggle persiste a escolha');
+const docEl = w.document.documentElement;
+const temaAntes = docEl.getAttribute('data-theme');
+const btnsTema = w.document.querySelectorAll('.tema-toggle');
+btnsTema[0].click();
+const temaDepois = docEl.getAttribute('data-theme');
+ok(temaDepois !== temaAntes, 'clicar no toggle troca o tema na hora');
+ok(w.localStorage.getItem('sa_tema') === (temaDepois === 'light' ? 'light' : 'dark'), 'escolha ficou salva no aparelho');
+btnsTema[0].click();
+ok(docEl.getAttribute('data-theme') === temaAntes, 'toggle volta (e o estado S/tema se restaura)');
+
+secao('DOM: tuas salas e tuas caixas — esquecer uma, esquecer todas');
+w.ver('v-home');
+w.localStorage.setItem('sa_minhas', JSON.stringify([{c:'AGAB1C2D',n:'landing'},{c:'AGZZ9900',n:'coleta'}]));
+w.renderMinhas();
+await tick(20);
+ok($('#minhas-wrap').hidden === false, 'lista de salas aparece');
+ok($$('#minhas [data-esq]').length === 2, 'cada sala tem ✕ de esquecer');
+$('#minhas [data-esq="0"]').click();
+await tick(20);
+ok(JSON.parse(w.localStorage.getItem('sa_minhas')).length === 1, '✕ esquece SÓ a sala daquele item');
+ok($('#minhas-wrap').hidden === false, 'lista segue com o que sobrou');
+$('#minhas-limpar').click();
+await tick(20);
+ok($('#minhas-wrap').hidden === true, 'esquecer todas limpa a lista');
+ok(w.localStorage.getItem('sa_minhas') === null, 'lista apagada do aparelho');
+w.localStorage.removeItem('sa_minhas');
+w.localStorage.setItem('sa_caixas', JSON.stringify([{c:'TESTCA1X'},{c:'TESTCA2X'}]));
+w.renderCaixas();
+await tick(20);
+ok($('#cx-limpar').hidden === false, 'caixas: botão esquecer todas visível');
+$('#cx-limpar').click();
+await tick(20);
+ok($('#cx-limpar').hidden === true, 'caixas: após limpar, botão some (lista vazia)');
+ok(w.localStorage.getItem('sa_caixas') === '[]', 'caixas esquecidas (sem ressuscitar a seed)');
+w.localStorage.removeItem('sa_caixas');
+ok(html.indexOf('do caixa-agente, mesmo banco') < 0, 'home SEM menção ao caixa-agente');
+ok(html.indexOf('abre no caixa-agente') < 0, 'texto de status sem menção ao caixa-agente');
+ok(html.indexOf("caixaUrl(c)") >= 0, 'link funcional das caixas continua (abrir)');
 
 console.log('\n══════════════════════════');
 console.log('RESULTADO: ' + pass + ' ✓ / ' + fail + ' ✗' + (fail ? (' → ' + FALHAS.join(' | ')) : ' — SUÍTE INTEIRA PASSOU 🎛️'));

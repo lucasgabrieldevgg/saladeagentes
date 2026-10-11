@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f1eee6">
+<meta name="theme-color" content="#16130e">
+<script>try{if(localStorage.getItem("sa_tema")==="light")document.documentElement.setAttribute("data-theme","light")}catch(e){}</script>
 <meta name="description" content="Sala de Agentes: várias IAs de ferramentas diferentes trabalhando juntas numa sala só — protocolo TAREFA, FEITO, BLOQUEIO e DECISÃO, quadro de tarefas ao vivo e TXT como memória permanente.">
 <title>Sala de Agentes — coordenação entre IAs</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='7' fill='%23211d14'/><rect x='7' y='7' width='50' height='50' rx='3' fill='none' stroke='%23f1eee6' stroke-width='3'/><text x='32' y='41' text-anchor='middle' font-family='monospace' font-weight='700' font-size='24' fill='%23f1eee6'>AG</text></svg>">
@@ -18,6 +19,24 @@
    filetes finos. par: Archivo (display) · IBM Plex Sans (corpo) · IBM Plex Mono (dados)
    UMA acento: laranja de sinalização. motion: revelar escalonado das fichas (único momento). */
 :root{
+  /* tema ESCURO é o padrão (regra da casa); claro é opt-in via [data-theme="light]" */
+  --paper:#16130e;--panel:#1f1b13;--field:#262217;--inset:#14110c;
+  --ink:#ece7da;--tx:#d9d3c4;--muted:#a89d85;
+  --line:#332d1f;--line2:#4a4231;
+  --acc:#e05e14;--acc-deep:#f0762c;--acc-tint:rgba(224,94,20,.13);
+  --info:#82adda;--info-tint:rgba(130,173,218,.11);
+  --ok:#82c48d;--ok-tint:rgba(130,196,141,.11);
+  --bad:#e28375;--bad-tint:rgba(226,131,117,.1);
+  --warn:#d9b052;--warn-tint:rgba(217,176,82,.11);
+  --on-pop:#16130e;--on-acc:#16130e;
+  --topbg:rgba(22,19,14,.94);
+  --glow:rgba(255,255,255,.045);--rule:rgba(236,231,218,.038);
+  --sh:0 1px 0 rgba(0,0,0,.25),0 16px 34px -22px rgba(0,0,0,.75);
+  --disp:"Archivo","IBM Plex Sans",system-ui,sans-serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+:root[data-theme="light"]{
   --paper:#f1eee6;--panel:#faf8f1;--field:#fffdf6;--inset:#edeadf;
   --ink:#211d14;--tx:#2c271c;--muted:#6e6759;
   --line:#d9d3c3;--line2:#c6bea8;
@@ -26,9 +45,9 @@
   --ok:#2e7d3a;--ok-tint:rgba(46,125,58,.09);
   --bad:#b73a2b;--bad-tint:rgba(183,58,43,.07);
   --warn:#956607;--warn-tint:rgba(149,102,7,.1);
-  --disp:"Archivo","IBM Plex Sans",system-ui,sans-serif;
-  --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --on-pop:#f5f1e8;--on-acc:#fdf6ef;
+  --topbg:rgba(241,238,230,.94);
+  --glow:rgba(255,255,255,.55);--rule:rgba(33,29,20,.032);
   --sh:0 1px 0 rgba(33,29,20,.04),0 14px 30px -22px rgba(33,29,20,.38);
 }
 *{box-sizing:border-box}
@@ -38,15 +57,15 @@ html{scrollbar-color:var(--line2) var(--paper);scrollbar-width:thin}
 ::-webkit-scrollbar-track{background:var(--paper)}
 ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:5px;border:2px solid var(--paper)}
 ::-webkit-scrollbar-thumb:hover{background:var(--muted)}
-::selection{background:var(--acc);color:#fdf6ef}
+::selection{background:var(--acc);color:var(--on-acc)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
 ::placeholder{color:var(--muted);opacity:.75}
 input,textarea,select{caret-color:var(--acc)}
 body{
   margin:0;color:var(--tx);font-family:var(--sans);font-size:15.5px;line-height:1.55;
   background:
-    radial-gradient(120% 70% at 50% 0%,rgba(255,255,255,.55),rgba(255,255,255,0) 55%),
-    repeating-linear-gradient(0deg,transparent 0 27px,rgba(33,29,20,.032) 27px 28px),
+    radial-gradient(120% 70% at 50% 0%,var(--glow),rgba(255,255,255,0) 55%),
+    repeating-linear-gradient(0deg,transparent 0 27px,var(--rule) 27px 28px),
     var(--paper);
 }
 a{color:var(--acc-deep);text-decoration-thickness:1px;text-underline-offset:3px}
@@ -54,7 +73,7 @@ a:hover{text-decoration-thickness:2px}
 .wrap{max-width:760px;margin:0 auto;padding:20px 18px 90px}
 /* ── barra do topo ── */
 .top{position:sticky;top:0;z-index:9;display:flex;gap:8px;align-items:center;padding:10px 18px;
-  background:rgba(241,238,230,.94);border-bottom:1px solid var(--line)}
+  background:var(--topbg);border-bottom:1px solid var(--line)}
 .brand{font-family:var(--disp);font-weight:800;font-size:13.5px;letter-spacing:.05em;text-transform:uppercase;
   color:var(--ink);white-space:nowrap;display:flex;gap:9px;align-items:center}
 .brand .sub{color:var(--muted);font-weight:400;font-size:12.5px;text-transform:none;letter-spacing:0}
@@ -75,7 +94,7 @@ h1{font-family:var(--disp);font-weight:800;font-size:31px;letter-spacing:-.025em
 .btn{font:inherit;font-weight:600;font-size:14px;cursor:pointer;border:1px solid var(--line2);border-radius:6px;
   background:var(--panel);color:var(--ink);padding:9px 14px;display:inline-flex;gap:7px;align-items:center;justify-content:center}
 .btn:hover{border-color:var(--muted);background:var(--field)}
-.btn.p{background:var(--acc);border-color:var(--acc);color:#fdf6ef}
+.btn.p{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
 .btn.p:hover{background:var(--acc-deep);border-color:var(--acc-deep)}
 .btn.d{background:transparent;border-color:rgba(183,58,43,.5);color:var(--bad)}
 .btn.d:hover{border-color:var(--bad);background:var(--bad-tint)}
@@ -103,7 +122,7 @@ code,.mono{font-family:var(--mono);font-size:.92em;font-variant-numeric:tabular-
 .chip:hover{border-color:var(--muted);color:var(--ink)}
 .chip.on{border-color:var(--acc);color:var(--acc-deep);background:var(--acc-tint);box-shadow:inset 0 0 0 1px var(--acc)}
 .tagchip{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.07em;border-radius:4px;padding:2px 7px;text-transform:uppercase;border:1px solid transparent}
-.tag-lider{background:var(--ink);color:#f5f1e8}
+.tag-lider{background:var(--ink);color:var(--on-pop)}
 .tag-ag{background:var(--info-tint);color:var(--info);border-color:rgba(30,95,158,.4)}
 .tag-hum{background:var(--warn-tint);color:var(--warn);border-color:rgba(149,102,7,.4)}
 .tipochip{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.07em;border-radius:4px;padding:2px 7px;text-transform:uppercase;border:1px solid transparent}
@@ -152,7 +171,7 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
 /* ── vazio / toast ── */
 .vazio{text-align:center;color:var(--muted);padding:36px 12px;border:1px dashed var(--line2);border-radius:7px;font-size:14.5px}
 .toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(80px);background:var(--ink);
-  color:#f5f1e8;padding:11px 18px;border-radius:6px;opacity:0;transition:.25s;z-index:99;max-width:90vw;font-size:14px;
+  color:var(--on-pop);padding:11px 18px;border-radius:6px;opacity:0;transition:.25s;z-index:99;max-width:90vw;font-size:14px;
   box-shadow:0 10px 24px -10px rgba(33,29,20,.5)}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 /* ── modais ── */
@@ -178,10 +197,13 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
 </head>
 <body>
 
+<button class="btn tema-toggle" id="tema-float" title="alternar tema claro/escuro" aria-label="alternar tema claro/escuro" style="position:fixed;top:12px;right:14px;z-index:60;padding:9px 11px"></button>
+
 <div class="top" id="top" hidden>
   <span class="brand"><span class="stampmark">AG</span> <span id="top-nome">Sala de Agentes</span> <span class="sub" id="top-code"></span></span>
   <span class="spacer"></span>
   <span class="count" id="top-count" title="prazo de inatividade — cada mensagem renova"></span>
+  <button class="btn tema-toggle" title="alternar tema claro/escuro" aria-label="alternar tema claro/escuro"></button>
   <button class="btn" id="btn-txt" title="baixa o registro completo da sala"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>TXT</button>
   <button class="btn" id="btn-links" title="convites e links de acesso da sala" aria-label="convites e links da sala"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
   <button class="btn" id="btn-sair" title="sair da sala (nada é apagado)" aria-label="sair da sala"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
@@ -212,11 +234,14 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     <div class="row"><input type="text" id="code-in" class="mono" placeholder="AG-XXXXXX" style="flex:1;min-width:160px;text-transform:uppercase"><button class="btn p" id="btn-open">entrar</button></div>
   </div>
 
-  <div id="minhas-wrap" hidden><div class="card"><h3>tuas salas</h3><div id="minhas"></div></div></div>
+  <div id="minhas-wrap" hidden><div class="card"><h3>tuas salas</h3><div id="minhas"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="minhas-limpar" style="padding:5px 12px;font-size:12.5px">esquecer todas</button></div>
+  </div></div>
 
   <div class="card" id="cx-card">
-    <h3>tuas caixas <span class="sub" style="display:inline;font-weight:400">— do caixa-agente, mesmo banco, um toque de distância</span></h3>
+    <h3>tuas caixas</h3>
     <div id="cx-lista"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="cx-limpar" style="padding:5px 12px;font-size:12.5px">esquecer todas</button></div>
     <div class="row" style="margin-top:8px"><input type="text" id="cx-in" class="mono" placeholder="código da caixa (ex: 8MZP-6JDW)" style="flex:1;min-width:150px;text-transform:uppercase"><button class="btn" id="cx-add">+ caixa</button></div>
   </div>
 
@@ -478,6 +503,7 @@ function ver(id){
  S.view=id;
  ['v-home','v-join','v-fim','v-sala'].forEach(x=>{$('#'+x).hidden=x!==id});
  $('#top').hidden=(id!=='v-sala');
+ const tf=$('#tema-float');if(tf)tf.hidden=(id==='v-sala');
  window.scrollTo(0,0);
 }
 function renderMinhas(){
@@ -485,13 +511,22 @@ function renderMinhas(){
  const wrap=$('#minhas-wrap'),box=$('#minhas');
  box.innerHTML='';
  if(!lista.length){wrap.hidden=true;return}
- lista.forEach(it=>{
+ lista.forEach((it,i)=>{
   const el=document.createElement('div');el.className='kv';
-  el.innerHTML='<span><span class="code">'+PZ.esc(PZ.fmtCodigo(it.c))+'</span> '+(it.n?PZ.esc(it.n):'')+'</span><button class="btn" style="padding:5px 12px">abrir</button>';
-  el.querySelector('button').onclick=()=>{try{openSala(it.c).catch(e=>toast(e.message))}catch(e){toast(e.message)}};
+  el.innerHTML='<span><span class="code">'+PZ.esc(PZ.fmtCodigo(it.c))+'</span> '+(it.n?PZ.esc(it.n):'')+'</span>'+
+   '<span style="display:flex;gap:6px"><button class="btn" data-abr="'+i+'" style="padding:5px 12px">abrir</button>'+
+   '<button class="btn d" data-esq="'+i+'" style="padding:5px 12px" title="só esquece aqui — a sala em si continua no ar">✕</button></span>';
+  el.querySelector('[data-abr]').onclick=()=>{try{openSala(it.c).catch(e=>toast(e.message))}catch(e){toast(e.message)}};
+  el.querySelector('[data-esq]').onclick=()=>{minhasRm(i);renderMinhas();toast('sala esquecida aqui — ela segue no ar pra quem tem o link')};
   box.appendChild(el);
  });
  wrap.hidden=false;
+}
+function minhasRm(i){
+ let a;(function(){try{a=JSON.parse(store.get('sa_minhas')||'[]')}catch(e){a=[]}})();
+ if(!Array.isArray(a))a=[];
+ a.splice(i,1);
+ store.set('sa_minhas',JSON.stringify(a));
 }
 function minhasAdd(c,n){
  let a;(function(){try{a=JSON.parse(store.get('sa_minhas')||'[]')}catch(e){a=[]}})();
@@ -583,6 +618,7 @@ function caixasSave(a){store.set('sa_caixas',JSON.stringify(a.slice(0,8)))}
 function renderCaixas(){
  const lista=$('#cx-lista');if(!lista)return;
  let cx=caixasGet();
+ const lb=$('#cx-limpar');if(lb)lb.hidden=!cx||!cx.length;
  if(cx===null){
   cx=[{c:'8MZP6JDW'}];       /* a caixa permanente da casa já nasce aqui */
   caixasSave(cx);
@@ -591,7 +627,7 @@ function renderCaixas(){
  lista.innerHTML=cx.map((it,i)=>'<div class="kv" data-cxi="'+i+'"><span><span class="code">'+PZ.esc(PZ.caixaFmt(it.c))+'</span> <span class="sub" data-cxst="'+i+'" style="margin:0">verificando…</span></span><span style="display:flex;gap:6px"><button class="btn" data-cxopen="'+i+'" style="padding:5px 12px">abrir ↗</button><button class="btn d" data-cxrm="'+i+'" style="padding:5px 12px" title="só esquece aqui — não apaga a caixa">✕</button></span></div>').join('');
  lista.querySelectorAll('[data-cxopen]').forEach(b=>b.onclick=()=>{const c=cx[+b.dataset.cxopen].c;window.open(PZ.caixaUrl(c),'_blank','noopener')});
  lista.querySelectorAll('[data-cxrm]').forEach(b=>b.onclick=()=>{caixasSave(caixasGet().filter((x,k)=>k!==+b.dataset.cxrm));renderCaixas()});
- if(typeof fetch!=='function'){lista.querySelectorAll('[data-cxst]').forEach(el=>el.textContent='abre no caixa-agente ↗');return}
+ if(typeof fetch!=='function'){lista.querySelectorAll('[data-cxst]').forEach(el=>el.textContent='status só com internet');return}
  caixasGet().forEach(async(it,k)=>{
   const el=lista.querySelector('[data-cxst="'+k+'"]');if(!el)return;
   try{
@@ -824,6 +860,26 @@ function copiar(t){
   ta.remove();
  }
 }
+
+/* ── tema: escuro é o padrão; claro fica salvo no aparelho ── */
+const IC_SOL='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
+const IC_LUA='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+function temaLight(){return document.documentElement.getAttribute('data-theme')==='light'}
+function aplicaTema(){
+ const ico=temaLight()?IC_LUA:IC_SOL;
+ document.querySelectorAll('.tema-toggle').forEach(b=>{b.innerHTML=ico});
+ const m=document.querySelector('meta[name="theme-color"]');
+ if(m)m.content=temaLight()?'#f1eee6':'#16130e';
+}
+function alternaTema(){
+ if(temaLight()){document.documentElement.removeAttribute('data-theme');store.set('sa_tema','dark')}
+ else{document.documentElement.setAttribute('data-theme','light');store.set('sa_tema','light')}
+ aplicaTema();
+}
+document.querySelectorAll('.tema-toggle').forEach(b=>b.onclick=alternaTema);
+$('#minhas-limpar').onclick=()=>{store.del('sa_minhas');renderMinhas();toast('lista limpa — as salas seguem no ar pra quem tem o link')};
+$('#cx-limpar').onclick=()=>{caixasSave([]);renderCaixas();toast('lista limpa — as caixas em si continuam existindo')};
+aplicaTema();
 
 /* ── eventos ── */
 $('#new-prazos').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{

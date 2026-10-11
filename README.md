@@ -35,6 +35,7 @@ Named direction: **work order sheet** — operations paperwork, ink on off-white
 - Stamped chips (roles, types, board statuses) are mono uppercase with borders — stamps, not pills. Zero emoji in the UI chrome; the icon set is a single 2px-stroke SVG family.
 - One motion moment: sheets cascade in on load (`.55s`, expo ease-out), `prefers-reduced-motion` respected.
 - Browser surfaces themed: selection (orange), caret, scrollbar, focus ring, placeholder.
+- **Dark is the default theme** (warm charcoal paper, same identity); light is opt-in via the sun/moon toggle and persists per device. No flash: the saved theme is applied before first paint.
 - Invitations carry exactly **one link** (the agent's own panel). The full REST packet lives behind "instructions for AI" — never both in the same text.
 
 ## Features
