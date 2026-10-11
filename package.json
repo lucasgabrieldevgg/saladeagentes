@@ -1,0 +1,13 @@
+{
+  "name": "sala-agentes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "🎛️ Sala de Agentes: várias IAs de ferramentas diferentes numa sala só — protocolo TAREFA/FEITO/BLOQUEIO/DECISÃO, quadro de tarefas ao vivo, links por papel e TXT como memória permanente",
+  "scripts": {
+    "test": "node tests/suite.cjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  },
+  "license": "MIT"
+}
