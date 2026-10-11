@@ -401,7 +401,7 @@ const PZ={
  tagClass(t){return t==='lider'?'tag-lider':(t==='ag'?'tag-ag':'tag-hum')},
  TIPOS:{
   tarefa:{rot:'TAREFA',cls:'tp-tarefa',campos:['oque','est']},
-  feito:{rot:'FEITO',cls:'tp-feito',campos:['ref','prova']},
+  feito:{rot:'FEITO',cls:'tp-feito',campos:['ref','oque','prova']},
   bloq:{rot:'BLOQUEIO',cls:'tp-bloq',campos:['ref','oque','precisa']},
   decisao:{rot:'DECISÃO',cls:'tp-decisao',campos:['de','pra','motivo']},
   livre:{rot:'MENSAGEM',cls:'tp-livre',campos:[]}
@@ -410,7 +410,7 @@ const PZ={
  msgMonta(tipo,c){
   const t=String(c.oque||c.de||'').trim(),x=String(c.est||'').trim();
   if(tipo==='tarefa')return 'assumi: '+(t||'—')+(x?' — estimo '+x:'');
-  if(tipo==='feito')return 'feito: '+(t||'—');
+  if(tipo==='feito'){const q=(arguments[2]&&c.ref&&arguments[2][c.ref]&&arguments[2][c.ref].texto)?arguments[2][c.ref].texto:t;return 'feito: '+(q||'—');}
   if(tipo==='bloq')return 'bloqueado em: '+(t||'—')+(c.precisa?' — preciso de: '+String(c.precisa).trim():'');
   if(tipo==='decisao')return (t||'—')+' → '+String(c.pra||'—').trim()+(c.motivo?' — motivo: '+String(c.motivo).trim():'');
   return String(c.texto||'').trim();
@@ -763,6 +763,7 @@ function renderComposer(){
   const q=(S.sala.quadro&&typeof S.sala.quadro==='object')?S.sala.quadro:{};
   const abertos=Object.keys(q).map(k=>({id:k,r:q[k]})).filter(x=>x.r&&x.r.st!=='feito');
   h+='<div class="field"><label>qual tarefa fechou</label><select id="c-ref"><option value="">— outra coisa (fora do quadro) —</option>'+abertos.map(x=>'<option value="'+x.id+'"'+(c.ref===x.id?' selected':'')+'>'+PZ.esc(x.r.texto)+'</option>').join('')+'</select></div>'+
+   '<div class="field"><label>o que fechou (só se for fora do quadro)</label><input type="text" id="c-oque" maxlength="200" value="'+PZ.esc(c.oque||'')+'" placeholder="ex: deploi da home no ar"></div>'+
    '<div class="field"><label>prova — link ou comando verificável (ou anexo embaixo)</label><input type="text" id="c-prova" maxlength="300" value="'+PZ.esc(c.prova||'')+'" placeholder="ex: https://… ou curl … | head"></div>';
  }
  if(S.tipo==='bloq'){
@@ -796,7 +797,7 @@ async function enviar(){
   texto=PZ.sanitizeTextoLen($('#c-texto')?$('#c-texto').value:'');
   if(!texto)return toast('escreve algo');
  }else{
-  texto=PZ.msgMonta(tipo,c);
+  texto=PZ.msgMonta(tipo,c,(S.sala.quadro&&typeof S.sala.quadro==='object')?S.sala.quadro:null);
   if(tipo==='tarefa'&&/^assumi: —/.test(texto))return toast('diz o que você assume');
   if(tipo==='bloq'&&/^bloqueado em: —/.test(texto))return toast('diz onde empaquei');
   if(tipo==='decisao'&&texto.split('→')[0].trim()==='—')return toast('preenche de → pra');

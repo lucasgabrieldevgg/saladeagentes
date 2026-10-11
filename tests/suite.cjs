@@ -60,6 +60,10 @@ ok(PZ.validaFeito('  ', false).ok === false, 'prova em branco → recusa');
 ok(PZ.validaFeito('https://meu-deploy.vercel.app', false).ok === true, 'prova com link → vale');
 ok(PZ.validaFeito('curl -s URL | grep ok', false).ok === true, 'prova com comando verificável → vale');
 ok(PZ.validaFeito('', true).ok === true, 'prova com anexo → vale');
+const QUADRO = { q1: { texto: 'montar a landing', quem: 'Ada', st: 'ando' } };
+ok(PZ.msgMonta('feito', { ref: 'q1' }, QUADRO) === 'feito: montar a landing', 'FEITO com ref → texto É a tarefa do quadro (não "feito: —")');
+ok(PZ.msgMonta('feito', { ref: '', oque: 'deploi no ar' }, QUADRO) === 'feito: deploi no ar', 'FEITO fora do quadro → usa o texto digitado');
+ok(PZ.msgMonta('feito', { ref: '', oque: '' }, QUADRO) === 'feito: —', 'FEITO sem nada → mantém o traço (UI bloqueia antes)');
 
 secao('CORE: anexos (qualquer tipo, até 350KB)');
 ok(PZ.anexoLimite === 350 * 1024, 'limite é 350KB');
@@ -244,6 +248,7 @@ await tick(20);
 ok($('#c-prova') !== null, 'FEITO: campo de prova');
 ok($('#c-ref') !== null && $('#c-ref').textContent.indexOf('montar a landing') >= 0, 'FEITO: seletor de tarefa do quadro');
 ok($('#btn-anexo').style.display !== 'none', 'FEITO: anexo disponível');
+ok($('#c-oque') !== null, 'FEITO: campo "o que fechou" fora do quadro');
 (w.S.refs={ref:'aaa',prova:''},w.renderComposer());
 w.S.anexo = null;
 await w.enviarFn();
