@@ -126,19 +126,49 @@ ok(txt.indexOf('expira em') > 0, 'prazo no cabeçalho');
 ok(PZ.txtDaSala({nome:'s', codigo:'AGXXZZ99', msgs:{}, quadro:{}}, AGORA).indexOf('#QUADRO') < 0, 'sem quadro → sem bloco de quadro');
 
 secao('CORE: links e instruções pra IA');
-const URLSALA = 'https://sala-agentes.vercel.app/?s=AG-AB1C2D';
+const URLSALA = 'https://saladeagentes.vercel.app/?s=AG-AB1C2D';
 ok(PZ.rolUrl('AGAB1C2D', 'lider').indexOf('?s=AG-AB1C2D&r=lider') > 0, 'link do líder');
 ok(PZ.agUrl('AGAB1C2D', 2).indexOf('?s=AG-AB1C2D&a=2') > 0, 'link do Agente 2');
 ok(PZ.humUrl('AGAB1C2D').indexOf('?s=AG-AB1C2D&h=1') > 0, 'link dos humanos');
-const instr = PZ.instrIA('AGAB1C2D', 'ag', 1, URLSALA);
+const instr = PZ.instrIA('AGAB1C2D', 'ag', 1, PZ.agUrl('AGAB1C2D',1));
 ok(instr.indexOf('SALA DE AGENTES') >= 0, 'instruções: apresentação da sala');
-ok(instr.indexOf('Agente 1') >= 0, 'instruções: papel da IA');
+ok(instr.indexOf('Você é o Agente 1') >= 0, 'convite do agente diz VOCÊ É O AGENTE 1');
+ok(instr.indexOf('SUA FUNÇÃO') >= 0, 'convite traz a FUNÇÃO dele');
+ok(instr.indexOf('https://saladeagentes.vercel.app/?s=AG-AB1C2D&a=1') >= 0, 'convite já vai com o LINK dele dentro');
 ok(instr.indexOf('TAREFA') >= 0 && instr.indexOf('FEITO') >= 0 && instr.indexOf('BLOQUEIO') >= 0 && instr.indexOf('DECISÃO') >= 0, 'instruções: os 4 tipos');
 ok(instr.indexOf('Sem artefato não vale') >= 0, 'instruções: prova obrigatória do FEITO');
 ok(instr.indexOf('/boxes/AGAB1C2D/msgs.json') >= 0, 'instruções: endereço REST de leitura');
 ok(instr.indexOf('/criado.json') >= 0, 'instruções: renovação do prazo');
 ok(instr.indexOf('LÍDER') >= 0 && instr.indexOf('QUADRO') >= 0, 'instruções: regras de convivência');
+ok(instr.indexOf('"ag":1') >= 0, 'REST do agente leva o número dele');
+
+secao('CORE: convite do LÍDER (explica a função)');
+const instrL = PZ.instrIA('AGAB1C2D', 'lider', null, PZ.rolUrl('AGAB1C2D','lider'));
+ok(instrL.indexOf('AGENTE LÍDER') >= 0 && instrL.indexOf('SUA FUNÇÃO') >= 0, 'convite do líder: papel + função');
+ok(instrL.indexOf('DIRETRIZ') >= 0, 'líder: palavra é diretriz');
+ok(instrL.indexOf('NUNCA responda só') >= 0, 'líder: nunca responde só "ok"');
+ok(instrL.indexOf('BLOQUEIO de agente é prioridade') >= 0, 'líder: destrava bloqueios');
+ok(instrL.indexOf('r=lider') >= 0, 'convite do líder com o LINK dele');
+ok(instrL.indexOf('"tag":"lider"') >= 0 && instrL.indexOf('"ag":') < 0, 'REST do líder sem número de agente');
+const instrH = PZ.instrIA('AGAB1C2D', 'hum', null, URLSALA);
+ok(instrH.indexOf('HUMANO') >= 0 && instrH.indexOf('ENDEREÇOS REST') < 0, 'convite de humano: simples, sem REST');
+ok(PZ.instrIA('AGAB1C2D','ag',1,'u') !== PZ.instrIA('AGAB1C2D','ag',2,'u'), 'cada número de agente = convite diferente');
 ok(PZ.novoId() !== PZ.novoId(), 'ids únicos');
+
+secao('CORE: apagar agente revoga o acesso');
+ok(PZ.agRevogado({revogados:{2:true}}, 2) === true, 'agente 2 revogado → true');
+ok(PZ.agRevogado({revogados:{2:true}}, 3) === false, 'agente 3 não revogado → false');
+ok(PZ.agRevogado({}, 1) === false && PZ.agRevogado(null, 1) === false, 'sem lista de revogados → ninguém revogado');
+
+secao('CORE: tuas caixas (caixa-agente, mesmo banco)');
+ok(PZ.caixaFmt('8mzp6jdw') === '8MZP-6JDW', 'código da caixa formatado (8 → XXXX-XXXX)');
+ok(PZ.caixaFmt('8MZP-6JDW') === '8MZP-6JDW', 'formatado com traço passa direto');
+ok(PZ.caixaPend({blocos:'#CAIXA\n#1 | a | x\n#2 | a | y\n', visto:1}) === 1, 'pendências = blocos além do visto');
+ok(PZ.caixaPend({blocos:'#CAIXA\n#3 | a | x\n', visto:5}) === 0, 'tudo visto → zero');
+ok(PZ.caixaPend(null) === null && PZ.caixaPend({}) === null, 'caixa vazia/quebrada → null');
+ok(PZ.caixaTtl({ttlHoras:24}) === 24 && PZ.caixaTtl({ttlHoras:500}) === 168, 'ttl da caixa respeita a faixa de 1–168h (diferente das salas)');
+ok(PZ.caixaUrl('8MZP6JDW') === 'https://caixa-agente.vercel.app/?c=8MZP-6JDW', 'abre a caixa no caixa-agente');
+ok(PZ.caixaFmt('TESTCA1X') === 'TEST-CA1X', 'código de teste de 8 formata');
 
 /* ═══ DOM ═══ */
 secao('DOM: home e boot');
@@ -222,7 +252,58 @@ ok($$('#tipo-chips .chip').map(b => b.textContent).join('|') === 'MENSAGEM', 'hu
 ok($('#c-texto') !== null, 'campo de texto livre');
 ok(d.body.textContent.indexOf('humano') >= 0 || true, 'composer de humano ok');
 
+secao('DOM: apagar agente — confirmação e "não perguntar de novo"');
+w.apagarAgente(2);
+await tick(20);
+ok($('#m-apagar').hidden === false, 'sem flag: modal de confirmação abre');
+ok($('#apg-t').textContent.indexOf('Agente 2') >= 0, 'modal nomeia o agente certo');
+$('#apg-nao').click();await tick(20);
+ok($('#m-apagar').hidden === true, 'deixa quieto fecha sem apagar');
+ok(w.localStorage.getItem('sa_semconfirm') === null, 'sem flag ainda');
+w.apagarAgente(2);await tick(10);
+$('#apg-nunca').click();await tick(30);
+ok(w.localStorage.getItem('sa_semconfirm') === '1', '"não perguntar de novo" grava a flag');
+ok($('#m-apagar').hidden === true, 'modal fecha e executa');
+w.apagarAgente(4);await tick(20);
+ok($('#m-apagar').hidden === true, 'com a flag: apaga DIRETO, sem modal');
+w.localStorage.removeItem('sa_semconfirm');
+
+secao('DOM: agente revogado é expulso da sala');
+w.S.eu = {nome:'Bia', tag:'ag', ag:2};
+w.S.sala.revogados = {2:true};
+w.renderSala();await tick(20);
+ok($('#v-fim').hidden === false && $('#fim-t').textContent.indexOf('acesso foi apagado') >= 0, 'agente revogado DENTRO da sala cai fora na hora');
+ok(w.S.sala === null, 'estado da sala limpo');
+ok($('#v-sala').hidden === true, 'sala fechada pra ele');
+w.S.code = 'AGAB1C2D';
+w.S.sala = JSON.parse(JSON.stringify(salaTxt));
+w.S.sala.msgs.aaa.tag='ag'; w.S.sala.msgs.aaa.ag=1;
+w.S.eu = {nome:'Ada', tag:'ag', ag:1};
+w.ver('v-sala');w.renderSala();await tick(20);
+ok($('#v-sala').hidden === false, 'agente NÃO revogado continua na sala');
+
+secao('DOM: tuas caixas na home (caixa-agente)');
+w.ver('v-home');w.renderCaixas();await tick(30);
+ok($('#v-home').hidden === false, 'home de volta');
+ok($('#cx-card') !== null, 'card das caixas existe');
+ok($('#cx-lista').textContent.indexOf('8MZP-6JDW') >= 0, 'caixa permanente da casa JÁ NASCE na lista (8MZP-6JDW)');
+const antes = $$('#cx-lista .kv').length;
+$('#cx-in').value = 'TESTCA1X';
+$('#cx-add').click();await tick(20);
+ok($$('#cx-lista .kv').length === antes + 1, '+ caixa adiciona na lista');
+ok($('#cx-lista').textContent.indexOf('TEST-CA1X') >= 0, 'código formatado na lista');
+$('#cx-in').value = 'TESTCA1X';
+$('#cx-add').click();await tick(20);
+ok($$('#cx-lista .kv').length === antes + 1, 'caixa duplicada não entra de novo');
+$('#cx-lista [data-cxrm="0"]').click();await tick(20);  /* unshift: a caixa adicionada fica no topo */
+ok($$('#cx-lista .kv').length === antes, '✕ esquece a caixa (só da lista)');
+ok($('#cx-lista').textContent.indexOf('8MZP-6JDW') >= 0, 'permanente segue lá');
+const cxAbrir = $('#cx-lista [data-cxopen="0"]');
+ok(cxAbrir !== null, 'cada caixa tem abrir ↗');
+ok(JSON.parse(w.localStorage.getItem('sa_caixas')).some(x=>x.c==='8MZP6JDW'), 'lista persistida no aparelho');
+
 secao('DOM: aviso do dia 5 e contador no topo');
+w.ver('v-sala');
 w.S.sala.criado = Date.now() - (168 - 48) * HORA;
 w.renderSala();
 await tick(20);
@@ -239,13 +320,24 @@ w.abreLinks();
 await tick(20);
 ok($('#m-links').hidden === false, 'modal de links abre');
 ok($('#lk-lider').value.indexOf('r=lider') > 0, 'link do líder no modal');
-ok($('#lk-ag1').value.indexOf('a=1') > 0, 'Agente 1 no modal');
+ok($('#cp-lider') !== null, 'líder tem botão de CONVITE (instrução + link)');
+ok($('#lk-ags input').value.indexOf('a=1') > 0, 'Agente 1 no modal');
+ok($('#lk-ags [data-cv="1"]') !== null, 'Agente 1 tem botão de convite');
+ok($('#lk-ags [data-del="1"]') !== null, 'Agente 1 pode ser APAGADO (revoga acesso)');
 ok($('#lk-hum').value.indexOf('h=1') > 0, 'link humano no modal');
 ok($('#instr-txt').value.indexOf('/boxes/AGAB1C2D/msgs.json') > 0, 'instruções REST no modal');
-w.S.linksSessao = [];
-(w.S.linksSessao=[2],w.renderLinksMais());
-ok($('#lk-mais').innerHTML.indexOf('a=2') > 0, 'agente novo entra na lista de links');
-ok($('#lk-mais').textContent.indexOf('Agente 2') > 0, 'rótulo do agente novo');
+w.S.linksSessao = [2];
+w.renderAgs();
+ok($('#lk-ags').innerHTML.indexOf('a=2') > 0, 'agente novo entra na lista de links');
+ok($('#lk-ags [data-del="2"]') !== null, 'agente novo também tem 🗑');
+w.S.sala.revogados = {3:true};
+w.S.linksSessao = [2,3];
+w.renderAgs();
+ok($('#lk-ags').innerHTML.indexOf('acesso apagado') > 0, 'agente revogado aparece como acesso apagado');
+ok($('#lk-ags [data-del="3"]') === null, 'revogado não tem botão de apagar de novo');
+delete w.S.sala.revogados;
+w.S.linksSessao = [2];
+w.renderAgs();
 
 secao('CORE: limpeza cobre as salas (nó boxes, códigos AG)');
 const limpa = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'limpeza.mjs'), 'utf8');
@@ -268,6 +360,16 @@ ok(html.indexOf('<meta name="description"') >= 0, 'meta description');
 ok(html.indexOf('[hidden]{display:none!important}') >= 0, 'âncora de hidden');
 ok(fs.existsSync(path.join(__dirname, '..', 'LICENSE')), 'LICENSE existe');
 ok(!/ghp_[A-Za-z0-9]{20}|sk-or-v1-|vcp_[A-Za-z0-9]{20}/.test(html), 'nenhum segredo real no HTML');
+
+secao('CRA: var CSS fantasma (usada × definida)');
+const cssAll = html.split('<style>')[1].split('</style>')[0];
+const defs = new Set([...cssAll.matchAll(/--([a-z0-9-]+)\s*:/gi)].map(m => m[1].toLowerCase()));
+const uses = [...cssAll.matchAll(/var\(--([a-z0-9-]+)/gi)].map(m => m[1].toLowerCase());
+const fantasmas = [...new Set(uses)].filter(u => !defs.has(u));
+ok(fantasmas.length === 0, 'toda var(--x) usada está definida' + (fantasmas.length ? ' → faltam: ' + fantasmas.join(',') : ''));
+const vazios = [...cssAll.matchAll(/(^|})\s*([a-z-]+\[?[^{}]*?)?\s*\{\s*\}/gi)].map(m => m[0]).filter(s => s.replace(/[}\s]/g,'').length > 2);
+ok(!/\}\s*tp-tarefa\{\}/.test(cssAll), 'sem seletor vazio esquecido (tell do CRA)');
+ok((html.match(/linear-gradient\(/g) || []).length === 0, 'zero gradientes decorativos');
 
 console.log('\n══════════════════════════');
 console.log('RESULTADO: ' + pass + ' ✓ / ' + fail + ' ✗' + (fail ? (' → ' + FALHAS.join(' | ')) : ' — SUÍTE INTEIRA PASSOU 🎛️'));

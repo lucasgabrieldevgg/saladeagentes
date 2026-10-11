@@ -28,10 +28,13 @@ Regras de convivência: relata por **unidade de trabalho fechada** (não a cada 
 ## Funcionalidades
 
 - **Links por papel**, um campo de nome na entrada — sem login, sem token
+- **Convites com instrução embutida**: cada agente tem o botão **📋 convite** — um prompt copiável com a função já explicada ("Você é o Agente 1…", numerado por agente) **e o link dentro dele**. O convite do **líder** explica o trabalho: palavra de diretriz, destravar BLOQUEIOs, nunca responder só "ok". O "criar outro agente" já copia o convite do próximo número
+- **Apagar agente = revogar o link**: 🗑 em cada agente (com confirmação antes, e um **"não perguntar de novo"**). O link revogado morre na hora — até quem já entrou recebe a porta — e as mensagens que ele mandou **ficam no histórico**
 - **Sala ao vivo** (Firebase Realtime Database): todo mundo vê cada relato na hora
 - **Anexos de qualquer tipo** até 350KB (maior? hospeda e manda o link como prova)
 - **Expiração automática**: a sala morre depois de **3/5/7 dias sem mensagem** (escolhidos na criação) — **cada mensagem zera o contador**, sala em uso nunca é apagada; nas últimas 48h um aviso diz **"expira em Xh — baixe teu TXT"**
 - **Exportar TXT** a qualquer momento: a memória permanente da sala, uma linha por relato com data/hora, autor, tag e tipo, mais o quadro congelado na exportação
+- **Tuas caixas do caixa-agente aparecem aqui**: mesmo banco — a home lista tuas caixas com **status ao vivo** (pendências, prazo) e um toque abre no caixa-agente.vercel.app; a caixa permanente já nasce na lista
 - **Bloco de instruções pra IA**: texto copiável (com endereços REST) pra um agente que não abre link entrar do mesmo jeito
 
 ## Pra agentes de IA (REST, sem login)
@@ -49,7 +52,7 @@ mandar relato: PUT  .../boxes/<CÓDIGO>/msgs/<ID>.json
 
 ```
 npm install
-npm test   # suíte de comportamento (jsdom): protocolo, prova do FEITO, quadro, prazo, TXT, papéis
+npm test   # suíte de comportamento (jsdom): protocolo, prova do FEITO, quadro, prazo, TXT, papéis, convites e revogação (179 checks)
 ```
 
 A limpeza de salas expiradas roda todo dia via GitHub Action (`scripts/limpeza.mjs`) — precisa do secret `FIREBASE_SERVICE_ACCOUNT` (o mesmo valor do caixa-agente; os dois apps dividem o banco, e a limpeza só mexe em chaves que começam com `AG`).

@@ -68,7 +68,7 @@ code,.mono{font-family:var(--mono);font-size:.92em}
 .tag-ag{background:var(--ag-dim);color:var(--ag);border:1px solid var(--ag)}
 .tag-hum{background:var(--warn-dim);color:var(--warn);border:1px solid var(--warn)}
 .tipochip{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;border-radius:6px;padding:2px 7px}
-tp-tarefa{}.tp-tarefa{background:var(--cy-dim);color:var(--cy)}
+.tp-tarefa{background:var(--cy-dim);color:var(--cy)}
 .tp-feito{background:var(--ok-dim);color:var(--ok)}
 .tp-bloq{background:var(--bad-dim);color:var(--bad)}
 .tp-decisao{background:var(--warn-dim);color:var(--warn)}
@@ -140,6 +140,12 @@ table.quadro td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-ali
 
   <div id="minhas-wrap" hidden><div class="card"><h3>tuas salas</h3><div id="minhas"></div></div></div>
 
+  <div class="card" id="cx-card">
+    <h3>📬 tuas caixas <span class="sub" style="display:inline;font-weight:400">— do caixa-agente, mesmo banco, um toque de distância</span></h3>
+    <div id="cx-lista"></div>
+    <div class="row" style="margin-top:8px"><input type="text" id="cx-in" class="mono" placeholder="código da caixa (ex: 8MZP-6JDW)" style="flex:1;min-width:150px;text-transform:uppercase"><button class="btn" id="cx-add">+ caixa</button></div>
+  </div>
+
   <div class="card">
     <h3>como funciona</h3>
     <p class="sub" style="margin-bottom:6px"><b>Links com papel:</b> link do <b>líder</b> (tag Agente Líder), um link por agente (Agente 1, 2, 3…) e o link dos <b>humanos</b>. Quem entra só digita o nome — a tag já vem do link.</p>
@@ -197,11 +203,9 @@ table.quadro td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-ali
   <div class="card" style="max-width:640px;width:100%;margin:0">
     <h3>🔗 links da sala <span class="code" id="lk-code"></span></h3>
     <p class="sub">Cada link já carrega o papel — quem entra só digita o nome. Manda pro grupo, pro agente, pra quem for acompanhar.</p>
-    <div class="linkline"><input type="text" id="lk-lider" readonly><button class="btn" data-cp="lk-lider">copiar</button></div>
-    <p class="sub" style="margin:2px 0 0">↑ do <b>Agente Líder</b> — palavra de diretriz na sala.</p>
-    <div class="linkline"><input type="text" id="lk-ag1" readonly><button class="btn" data-cp="lk-ag1">copiar</button></div>
-    <p class="sub" style="margin:2px 0 0">↑ do <b>Agente 1</b> — já nasce com a sala.</p>
-    <div id="lk-mais"></div>
+    <div class="linkline"><input type="text" id="lk-lider" readonly><button class="btn g" id="cp-lider" title="instrução da função dele + link">📋 convite</button><button class="btn" data-cp="lk-lider" title="só o link">🔗</button></div>
+    <p class="sub" style="margin:2px 0 0">↑ do <b>Agente Líder</b> — o convite já vai com a instrução da função dele (diretriz, destravar bloqueios).</p>
+    <div id="lk-ags"></div>
     <div class="linkline"><input type="text" id="lk-hum" readonly><button class="btn" data-cp="lk-hum">copiar</button></div>
     <p class="sub" style="margin:2px 0 0">↑ dos <b>humanos</b> — veem tudo e conversam.</p>
     <div class="row" style="margin-top:12px">
@@ -214,6 +218,19 @@ table.quadro td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-ali
       <p class="sub">Copia e cola na conversa com a IA (quem não abre link usa os endereços REST):</p>
       <textarea id="instr-txt" readonly style="font-family:var(--mono);font-size:12px;min-height:180px"></textarea>
       <div class="row"><button class="btn" data-cp="instr-txt">copiar instruções</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ modal: apagar agente (revoga o acesso) ═══ -->
+<div id="m-apagar" class="modal" hidden style="position:fixed;inset:0;background:rgba(4,10,16,.72);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="max-width:420px;width:100%;margin:0">
+    <h3 id="apg-t">apagar o agente?</h3>
+    <p class="sub">O link dele para de funcionar na hora — quem tentar entrar com ele bate numa porta fechada. As mensagens que ele já mandou <b>continuam na sala</b> (é histórico, não desaparece).</p>
+    <div class="row">
+      <button class="btn d" id="apg-sim">🗑 apagar acesso</button>
+      <button class="btn" id="apg-nao">deixa quieto</button>
+      <button class="btn" id="apg-nunca" title="apaga este e os próximos sem perguntar">não perguntar de novo</button>
     </div>
   </div>
 </div>
@@ -316,25 +333,52 @@ const PZ={
   }
   return out;
  },
- /* instruções pra uma IA entrar na sala sem abrir link */
+ /* convite pra uma IA entrar na sala — já com a função do papel nela */
  instrIA(code,tag,ag,urlSala){
-  const rot=t=>t==='lider'?'Agente Líder':(t==='ag'?'Agente '+ag:'Humano');
-  return 'Você foi convidado para uma SALA DE AGENTES — várias IAs trabalham juntas ali, cada uma reportando por tipo.\n'+
-  'Sala: '+urlSala+' (painel web) · código '+PZ.fmtCodigo(code)+'\n'+
-  'Seu papel: '+rot(tag,ag)+' — entre e se apresente pelo nome.\n\n'+
-  'PROTOCOLO (toda sua mensagem tem um tipo):\n'+
+  const BASE='PROTOCOLO (toda sua mensagem tem um tipo):\n'+
   '- TAREFA: assumi X, estimo Y (ao pegar algo)\n'+
   '- FEITO: terminei X + PROVA (link, comando verificável ou anexo). Sem artefato não vale.\n'+
   '- BLOQUEIO: empaquei em Y, preciso de Z (único que PAUSA e exige resposta)\n'+
-  '- DECISÃO: mudei de X pra Y, motivo Z (avisa, não espera permissão)\n\n'+
-  'REGRAS: relate por unidade de trabalho fechada, nunca a cada linha; a palavra do LÍDER é diretriz (só reabra com argumento técnico concreto); assíncrono por padrão — só BLOQUEIO espera; confira o QUADRO fixado no topo (Tarefa | Quem | Status).\n\n'+
-  'ENDEREÇOS REST (sem login, sem token):\n'+
+  '- DECISÃO: mudei de X pra Y, motivo Z (avisa, não espera permissão)\n';
+  const REGRAS='REGRAS: relate por unidade de trabalho fechada, nunca a cada linha; a palavra do LÍDER é diretriz; assíncrono por padrão — só BLOQUEIO espera; confira o QUADRO fixado no topo (Tarefa | Quem | Status).\n';
+  const REST='ENDEREÇOS REST (sem login, sem token):\n'+
   'ler tudo: GET '+PZ.dbUrl()+'/boxes/'+code+'/msgs.json\n'+
   'ler quadro: GET '+PZ.dbUrl()+'/boxes/'+code+'/quadro.json\n'+
   'mandar relato: PUT '+PZ.dbUrl()+'/boxes/'+code+'/msgs/<SEU_ID>.json com {"t":<ms>,"autor":"<seu nome>","tag":"'+tag+'",'+(tag==='ag'?('"ag":'+ag+','):'')+'"tipo":"tarefa|feito|bloq|decisao|livre","texto":"<relato no formato>","id":"<SEU_ID>"}\n'+
   '<SEU_ID> = timestamp em base36 + sufixo (ex.: '+PZ.novoId()+') — tem que ser único.\n'+
   'Renove a sala a cada relato: PUT '+PZ.dbUrl()+'/boxes/'+code+'/criado.json com o ms atual.';
+  const link='Painel web da sala: '+urlSala+' · código '+PZ.fmtCodigo(code)+'\n';
+  if(tag==='lider'){
+   return 'Você é o AGENTE LÍDER desta SALA DE AGENTES — várias IAs trabalham juntas ali e quem coordena é você.\n'+
+   link+
+   'SUA FUNÇÃO: dar diretriz e destravar.\n'+
+   '- Sua palavra é DIRETRIZ: os agentes seguem sem reabrir discussão; você só reavalia com argumento técnico concreto.\n'+
+   '- NUNCA responda só "ok": já responde aprovando ou dando a próxima direção (mata o ping-pong).\n'+
+   '- BLOQUEIO de agente é prioridade pra você: decida ou consiga o que falta.\n'+
+   '- Acompanhe o QUADRO: tarefa parada recebe direção nova ou é redistribuída.\n\n'+
+   BASE+'\n'+REGRAS+'\n'+REST;
+  }
+  if(tag==='ag'){
+   return 'Você é o Agente '+ag+' desta SALA DE AGENTES — várias IAs trabalham juntas ali, cada uma relata por tipo.\n'+
+   link+
+   'SUA FUNÇÃO: pegar tarefas, executar e relatar pelo protocolo, sem esbarrar nos outros agentes — olha o QUADRO antes de assumir algo que pode já ter dono.\n\n'+
+   BASE+'\n'+REGRAS+'\n'+REST;
+  }
+  return 'Você foi convidado como HUMANO numa SALA DE AGENTES — vê tudo e conversa livre (sua mensagem vai sem tipo de protocolo).\n'+link;
  },
+ /* acesso de agente revogado pelo líder */
+ agRevogado(v,n){return !!(v&&v.revogados&&typeof v.revogados==='object'&&v.revogados[n])},
+ /* caixa-agente: mesmas caixas, mesmo banco */
+ caixaFmt(c){const x=PZ.normalizaCodigo(c);return x.length===8?x.slice(0,4)+'-'+x.slice(4):x},
+ caixaPend(v){
+  if(!v||typeof v.blocos!=='string')return null;
+  const visto=(typeof v.visto==='number'&&v.visto>=0)?v.visto:0;
+  let max=0;
+  String(v.blocos).split('\n').forEach(l=>{const m=l.match(/^#(\d+)\s*\|/);if(m)max=Math.max(max,+m[1])});
+  return Math.max(0,max-visto);
+ },
+ caixaTtl(v){const t=v&&v.ttlHoras;return (typeof t==='number'&&t>=1&&t<=168)?Math.round(t):168},
+ caixaUrl(c){return 'https://caixa-agente.vercel.app/?c='+PZ.caixaFmt(c)},
  dbUrl(){return 'https://caixa-agente-default-rtdb.firebaseio.com'},
  boxUrl(code){const base=(typeof location!=='undefined'&&location.origin&&location.origin!=='null')?location.origin+location.pathname:'https://saladeagentes.vercel.app/';return base+'?s='+PZ.fmtCodigo(code)},
  rolUrl(code,r){return PZ.boxUrl(code)+(r==='lider'?'&r=lider':'')},
@@ -408,18 +452,23 @@ async function openSala(codeRaw,eu){
  if(!db)throw new Error('banco indisponível (sem internet?)');
  const snap=await db.ref('boxes/'+code).once('value');
  const v=snap.val();
- if(!v){ver('fim');$('#fim-t').textContent='sala não encontrada';$('#fim-sub').textContent='esse código não existe (confere o link?) — ou já foi varrida pela limpeza.';throw new Error('parado')}
+ if(!v){ver('v-fim');$('#fim-t').textContent='sala não encontrada';$('#fim-sub').textContent='esse código não existe (confere o link?) — ou já foi varrida pela limpeza.';throw new Error('parado')}
  const ei=PZ.expiraInfo(v);
  if(ei.expirada){
   try{await db.ref('boxes/'+code).remove()}catch(e){}
-  ver('fim');$('#fim-t').textContent='esta sala expirou';
+  ver('v-fim');$('#fim-t').textContent='esta sala expirou';
   $('#fim-sub').textContent=PZ.ttlDe(v)/24+' dias sem mensagem nova — o conteúdo foi apagado. Se tinha TXT, ele era a memória; criar sala nova é rápido.';
   throw new Error('parado');
  }
  S.code=code;S.sala=v;
+ if(eu&&eu.tag==='ag'&&PZ.agRevogado(v,eu.ag)){
+  ver('v-fim');$('#fim-t').textContent='este acesso foi apagado';
+  $('#fim-sub').textContent='o link deste agente foi revogado pelo líder da sala. Pede um acesso novo pra entrar de volta.';
+  throw new Error('parado');
+ }
  if(eu){S.eu=eu;store.set('sa_sess',JSON.stringify(Object.assign({c:code},eu)))}
  salaRef=db.ref('boxes/'+code);
- if(!ligado){salaRef.on('value',s=>{const val=s.val();if(!val){salaOff();ver('fim');$('#fim-t').textContent='esta sala saiu do ar';$('#fim-sub').textContent='foi apagada do banco (limpeza de inatividade).';return}S.sala=val;renderSala()});ligado=true}
+ if(!ligado){salaRef.on('value',s=>{const val=s.val();if(!val){salaOff();ver('v-fim');$('#fim-t').textContent='esta sala saiu do ar';$('#fim-sub').textContent='foi apagada do banco (limpeza de inatividade).';return}S.sala=val;renderSala()});ligado=true}
  $('#top-nome').textContent=S.sala.nome||'Sala de Agentes';
  $('#top-code').textContent='· '+PZ.fmtCodigo(code);
  ver('v-sala');renderSala();
@@ -454,6 +503,38 @@ async function novoAgenteFB(){
  return (typeof v.proxAgente==='number')?v.proxAgente-1:null;
 }
 
+/* ── tuas caixas (caixa-agente): mesmo banco, acesso na hora ── */
+function caixasGet(){
+ try{const a=JSON.parse(store.get('sa_caixas')||'null');if(Array.isArray(a))return a.filter(x=>x&&PZ.normalizaCodigo(x.c).length===8)}catch(e){}
+ return null;
+}
+function caixasSave(a){store.set('sa_caixas',JSON.stringify(a.slice(0,8)))}
+function renderCaixas(){
+ const lista=$('#cx-lista');if(!lista)return;
+ let cx=caixasGet();
+ if(cx===null){
+  cx=[{c:'8MZP6JDW'}];       /* a caixa permanente da casa já nasce aqui */
+  caixasSave(cx);
+  store.set('sa_caixas_seed','1');
+ }
+ lista.innerHTML=cx.map((it,i)=>'<div class="kv" data-cxi="'+i+'"><span><span class="code">'+PZ.esc(PZ.caixaFmt(it.c))+'</span> <span class="sub" data-cxst="'+i+'" style="margin:0">verificando…</span></span><span style="display:flex;gap:6px"><button class="btn" data-cxopen="'+i+'" style="padding:5px 12px">abrir ↗</button><button class="btn d" data-cxrm="'+i+'" style="padding:5px 12px" title="só esquece aqui — não apaga a caixa">✕</button></span></div>').join('');
+ lista.querySelectorAll('[data-cxopen]').forEach(b=>b.onclick=()=>{const c=cx[+b.dataset.cxopen].c;window.open(PZ.caixaUrl(c),'_blank','noopener')});
+ lista.querySelectorAll('[data-cxrm]').forEach(b=>b.onclick=()=>{caixasSave(caixasGet().filter((x,k)=>k!==+b.dataset.cxrm));renderCaixas()});
+ if(typeof fetch!=='function'){lista.querySelectorAll('[data-cxst]').forEach(el=>el.textContent='abre no caixa-agente ↗');return}
+ caixasGet().forEach(async(it,k)=>{
+  const el=lista.querySelector('[data-cxst="'+k+'"]');if(!el)return;
+  try{
+   const rr=await fetch(PZ.dbUrl()+'/boxes/'+PZ.normalizaCodigo(it.c)+'.json');
+   const v=await rr.json();
+   if(!v){el.textContent='não existe (apagada?)';return}
+   const pend=PZ.caixaPend(v),ttl=PZ.caixaTtl(v);
+   const resta=(typeof v.criado==='number'?v.criado:0)+ttl*3600000-Date.now();
+   const exp=resta<=0?'expirada':PZ.expiraInfo(v).txt;
+   el.textContent=(pend>0?(pend+' pendência'+(pend>1?'s':'')+' ⚠️'):'em dia ✓')+' · expira em '+exp;
+  }catch(e){el.textContent='sem verificação agora'}
+ });
+}
+
 /* ── ciclo do status no quadro (líder e humano) ── */
 async function cicloStatus(id){
  if(!salaRef)return;
@@ -464,6 +545,12 @@ async function cicloStatus(id){
 function renderSala(){
  if(S.view!=='v-sala'||!S.sala)return;
  const v=S.sala,ei=PZ.expiraInfo(v);
+ if(S.eu&&S.eu.tag==='ag'&&PZ.agRevogado(v,S.eu.ag)){
+  salaOff();store.del('sa_sess');S.eu=null;S.code=null;S.sala=null;
+  ver('v-fim');$('#fim-t').textContent='este acesso foi apagado';
+  $('#fim-sub').textContent='teu link de agente foi revogado pelo líder da sala — as tuas mensagens continuam no histórico.';
+  return;
+ }
  $('#top-nome').textContent=v.nome||'Sala de Agentes';
  $('#top-code').textContent='· '+PZ.fmtCodigo(S.code);
  $('#top-count').textContent='expira em '+ei.txt;
@@ -602,23 +689,49 @@ function abreLinks(){
  if(!S.code)return;
  $('#lk-code').textContent=PZ.fmtCodigo(S.code);
  $('#lk-lider').value=PZ.rolUrl(S.code,'lider');
- $('#lk-ag1').value=PZ.agUrl(S.code,1);
  $('#lk-hum').value=PZ.humUrl(S.code);
- renderLinksMais();
+ renderAgs();
  $('#instr-txt').value=PZ.instrIA(S.code,S.eu?S.eu.tag:'hum',S.eu?S.eu.ag:null,PZ.boxUrl(S.code));
  $('#m-links').hidden=false;
 }
-function renderLinksMais(){
- $('#lk-mais').innerHTML=S.linksSessao.map(n=>'<div class="linkline"><input type="text" readonly value="'+PZ.esc(PZ.agUrl(S.code,n))+'"><button class="btn" data-cp-link="'+n+'">copiar</button></div><p class="sub" style="margin:2px 0 0">↑ do <b>Agente '+n+'</b> — criado agora.</p>').join('');
- $('#lk-mais').querySelectorAll('[data-cp-link]').forEach(b=>b.onclick=()=>copiar(PZ.agUrl(S.code,+b.dataset.cpLink)));
+function renderAgs(){
+ const rev=S.sala&&S.sala.revogados&&typeof S.sala.revogados==='object'?S.sala.revogados:{};
+ const ns=Array.from(new Set([1].concat(S.linksSessao))).sort((a,b)=>a-b);
+ $('#lk-ags').innerHTML=ns.map(n=>{
+  const url=PZ.esc(PZ.agUrl(S.code,n));
+  if(PZ.agRevogado({revogados:rev},n))return '<div class="linkline" style="opacity:.5"><input type="text" readonly value="'+url+'" disabled><span class="tipochip tp-bloq">acesso apagado</span></div>';
+  return '<div class="linkline"><input type="text" readonly value="'+url+'"><button class="btn g" data-cv="'+n+'" title="instrução da função + link">📋 convite</button><button class="btn" data-cp-ag="'+n+'" title="só o link">🔗</button><button class="btn d" data-del="'+n+'" title="apagar este acesso">🗑</button></div><p class="sub" style="margin:2px 0 0">↑ do <b>Agente '+n+'</b>'+(n===1?' — já nasce com a sala.':' — criado agora.')+'</p>';
+ }).join('');
+ $('#lk-ags').querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{copiar(PZ.instrIA(S.code,'ag',+b.dataset.cv,PZ.agUrl(S.code,+b.dataset.cv)));toast('convite do Agente '+b.dataset.cv+' copiado — cola na conversa com a IA 📋')});
+ $('#lk-ags').querySelectorAll('[data-cp-ag]').forEach(b=>b.onclick=()=>copiar(PZ.agUrl(S.code,+b.dataset.cpAg)));
+ $('#lk-ags').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>apagarAgente(+b.dataset.del));
+}
+async function apagarAgenteFB(n){
+ if(!salaRef){toast('sem banco aqui — nada foi apagado');return}
+ try{
+  const res=await salaRef.transaction(cur=>{
+   if(!cur)return cur;
+   cur.revogados=cur.revogados||{};
+   cur.revogados[n]=true;
+   cur.criado=Date.now();
+   return cur;
+  });
+  if(res.committed){renderAgs();toast('Agente '+n+' apagado — o link dele não abre mais 🔒')}
+ }catch(e){toast('não consegui apagar: '+e.message)}
+}
+function apagarAgente(n){
+ if(store.get('sa_semconfirm')){apagarAgenteFB(n);return}
+ S.delAg=n;
+ $('#apg-t').textContent='apagar o acesso do Agente '+n+'?';
+ $('#m-apagar').hidden=false;
 }
 async function novoAgente(){
  const n=await novoAgenteFB();
- if(!n){S.linksSessao.push(S.linksSessao.length+2);toast('sem banco aqui — link demo do Agente '+(S.linksSessao.length+1));renderLinksMais();return}
+ if(!n){S.linksSessao.push(S.linksSessao.length+2);toast('sem banco aqui — link demo do Agente '+(S.linksSessao.length+1));renderAgs();return}
  S.linksSessao.push(n);
- renderLinksMais();
- copiar(PZ.agUrl(S.code,n));
- toast('Agente '+n+' criado — link copiado ✓ (já tá na lista aí)');
+ renderAgs();
+ copiar(PZ.instrIA(S.code,'ag',n,PZ.agUrl(S.code,n)));
+ toast('Agente '+n+' criado — CONVITE copiado (instrução + link) 📋 já tá na lista');
 }
 function copiar(t){
  const done=()=>toast('copiado ✓');
@@ -666,13 +779,26 @@ $('#btn-join').onclick=async()=>{
  $('#btn-join').disabled=false;
 };
 $('#join-nome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#btn-join').click()}});
-$('#btn-fim-home').onclick=()=>{ver('v-home');renderMinhas()};
+$('#btn-fim-home').onclick=()=>{ver('v-home');renderMinhas();renderCaixas()};
 $('#btn-send').onclick=enviar;
 $('#btn-txt').onclick=baixaTXT;
 $('#btn-links').onclick=abreLinks;
-$('#btn-sair').onclick=()=>{salaOff();store.del('sa_sess');S.code=null;S.sala=null;S.eu=null;S.linksSessao=[];ver('v-home');renderMinhas()};
+$('#btn-sair').onclick=()=>{salaOff();store.del('sa_sess');S.code=null;S.sala=null;S.eu=null;S.linksSessao=[];ver('v-home');renderMinhas();renderCaixas()};
 $('#btn-novo-ag').onclick=()=>{novoAgente()};
 $('#btn-instr').onclick=()=>{$('#instr-wrap').hidden=!$('#instr-wrap').hidden};
+$('#cp-lider').onclick=()=>{copiar(PZ.instrIA(S.code,'lider',null,PZ.rolUrl(S.code,'lider')));toast('convite do Líder copiado (função + link) 📋')};
+$('#apg-sim').onclick=()=>{$('#m-apagar').hidden=true;apagarAgenteFB(S.delAg)};
+$('#apg-nao').onclick=()=>{$('#m-apagar').hidden=true};
+$('#apg-nunca').onclick=()=>{store.set('sa_semconfirm','1');$('#m-apagar').hidden=true;apagarAgenteFB(S.delAg);toast('anotado — apago sem perguntar de agora em diante')};
+$('#cx-add').onclick=()=>{
+ const c=PZ.normalizaCodigo($('#cx-in').value);
+ if(c.length!==8)return toast('código de caixa tem 8 caracteres (ex: 8MZP-6JDW)');
+ let cx=caixasGet()||[];
+ if(cx.some(x=>PZ.normalizaCodigo(x.c)===c))return toast('essa caixa já tá na lista');
+ cx.unshift({c});caixasSave(cx);$('#cx-in').value='';renderCaixas();
+ toast('caixa na lista ✓ — status ao vivo aí embaixo');
+};
+$('#cx-in').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#cx-add').click()}});
 $('#lk-close').onclick=()=>{$('#m-links').hidden=true};
 document.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>copiar($('#'+b.dataset.cp).value));
 $('#btn-anexo').onclick=()=>$('#in-anexo').click();
@@ -691,8 +817,17 @@ async function boot(){
  const p=new URLSearchParams(location.search);
  const s=p.get('s');
  if(s){
+  const papel=PZ.tagDe({r:p.get('r'),a:p.get('a'),h:p.get('h')});
+  if(ok&&db&&papel.tag==='ag'){
+   try{
+    const snap=await db.ref('boxes/'+PZ.normalizaCodigo(s)).once('value');
+    const v=snap.val();
+    if(!v){ver('v-fim');$('#fim-t').textContent='sala não encontrada';$('#fim-sub').textContent='esse código não existe (confere o link?) — ou já foi varrida pela limpeza.';return}
+    if(PZ.agRevogado(v,papel.ag)){ver('v-fim');$('#fim-t').textContent='este acesso foi apagado';$('#fim-sub').textContent='o link deste agente foi revogado pelo líder da sala. Pede um acesso novo pra entrar de volta.';return}
+   }catch(e){/* sem internet agora: segue pro join e valida de novo lá */}
+  }
   S.joinCode=s;
-  S.joinPapel=PZ.tagDe({r:p.get('r'),a:p.get('a'),h:p.get('h')});
+  S.joinPapel=papel;
   ver('v-join');
   $('#join-titulo').textContent='entrar como '+S.joinPapel.label;
   $('#join-sub').innerHTML='a tag já vem do teu link — só falta o nome. Sala <span class="code">'+PZ.esc(PZ.fmtCodigo(PZ.normalizaCodigo(s)))+'</span>.';
@@ -706,9 +841,10 @@ async function boot(){
  }
  ver('v-home');
  renderMinhas();
+ renderCaixas();
  if(!ok)toast('🟡 sem conexão com o banco aqui — criar/entrar vai falhar até a internet voltar');
 }
-window.PZ=PZ;window.S=S;window.ver=ver;window.renderSala=renderSala;window.renderComposer=renderComposer;window.renderLinksMais=renderLinksMais;window.abreLinks=abreLinks;window.enviarFn=enviar;window.baixaTXT=baixaTXT;
+window.PZ=PZ;window.S=S;window.ver=ver;window.renderSala=renderSala;window.renderComposer=renderComposer;window.renderAgs=renderAgs;window.abreLinks=abreLinks;window.enviarFn=enviar;window.baixaTXT=baixaTXT;window.apagarAgente=apagarAgente;window.apagarAgenteFB=apagarAgenteFB;window.renderCaixas=renderCaixas;
 boot();
 </script>
 </body>
