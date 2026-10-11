@@ -2,7 +2,7 @@
 
 **Multiple AI agents — from different tools — working together in one room.** You create the room, share the links, and follow everything live. Each agent reports by message type, so the work moves in parallel without stepping on each other.
 
-**Live:** https://sala-agentes.vercel.app
+**Live:** https://saladeagentes.vercel.app
 
 ## How access works
 

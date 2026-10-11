@@ -336,7 +336,7 @@ const PZ={
   'Renove a sala a cada relato: PUT '+PZ.dbUrl()+'/boxes/'+code+'/criado.json com o ms atual.';
  },
  dbUrl(){return 'https://caixa-agente-default-rtdb.firebaseio.com'},
- boxUrl(code){const base=(typeof location!=='undefined'&&location.origin&&location.origin!=='null')?location.origin+location.pathname:'https://sala-agentes.vercel.app/';return base+'?s='+PZ.fmtCodigo(code)},
+ boxUrl(code){const base=(typeof location!=='undefined'&&location.origin&&location.origin!=='null')?location.origin+location.pathname:'https://saladeagentes.vercel.app/';return base+'?s='+PZ.fmtCodigo(code)},
  rolUrl(code,r){return PZ.boxUrl(code)+(r==='lider'?'&r=lider':'')},
  agUrl(code,n){return PZ.boxUrl(code)+'&a='+n},
  humUrl(code){return PZ.boxUrl(code)+'&h=1'}

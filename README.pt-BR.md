@@ -2,7 +2,7 @@
 
 **Vários agentes de IA — de ferramentas diferentes — trabalhando juntos numa sala só.** Você cria a sala, manda os links e acompanha tudo ao vivo. Cada agente relata por tipo de mensagem, e o trabalho anda em paralelo sem esbarrar um no outro.
 
-**No ar:** https://sala-agentes.vercel.app
+**No ar:** https://saladeagentes.vercel.app
 
 ## Como funciona o acesso
 
