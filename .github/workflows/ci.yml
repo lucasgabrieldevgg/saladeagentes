@@ -22,6 +22,7 @@ jobs:
           grep -q "IBM Plex Sans" index.html
           grep -q "IBM Plex Mono" index.html
           if grep -qE "Space Grotesk|JetBrains Mono" index.html; then echo "fonte da era vibe voltou"; exit 1; fi
-          if grep -qE "radial-gradient|7c5cff|4f6df5|8b5cf6|a78bfa|7c3aed|background-clip:text" index.html; then echo "delator visual"; exit 1; fi
+          if grep -qE "7c5cff|4f6df5|8b5cf6|a78bfa|7c3aed|background-clip:text" index.html; then echo "delator visual"; exit 1; fi
+          if grep -E "radial-gradient" index.html | grep -qvE "rgba\(255,255,255"; then echo "radial colorido (glow) é delator; só branco da atmosfera do papel vale"; exit 1; fi
           if grep -rEn "ghp_[A-Za-z0-9]{20}|sk-or-v1-|vcp_[A-Za-z0-9]{20}" index.html scripts/; then echo "segredo real exposto"; exit 1; fi
           test -f LICENSE
