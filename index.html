@@ -100,6 +100,10 @@ table.quadro td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-ali
 .kv span{color:var(--muted)}
 .prazo{font-family:var(--mono);font-size:12.5px;color:var(--warn)}
 .count{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.lkr{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.lkr .nm{font-weight:700;font-size:14px;min-width:110px}
+.lkr.off{opacity:.45}
+.lkr .sp{flex:1}
 </style>
 </head>
 <body>
@@ -202,12 +206,8 @@ table.quadro td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-ali
 <div id="m-links" class="modal" hidden style="position:fixed;inset:0;background:rgba(4,10,16,.72);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:30px 14px;overflow:auto">
   <div class="card" style="max-width:640px;width:100%;margin:0">
     <h3>🔗 links da sala <span class="code" id="lk-code"></span></h3>
-    <p class="sub">Cada link já carrega o papel — quem entra só digita o nome. Manda pro grupo, pro agente, pra quem for acompanhar.</p>
-    <div class="linkline"><input type="text" id="lk-lider" readonly><button class="btn g" id="cp-lider" title="instrução da função dele + link">📋 convite</button><button class="btn" data-cp="lk-lider" title="só o link">🔗</button></div>
-    <p class="sub" style="margin:2px 0 0">↑ do <b>Agente Líder</b> — o convite já vai com a instrução da função dele (diretriz, destravar bloqueios).</p>
-    <div id="lk-ags"></div>
-    <div class="linkline"><input type="text" id="lk-hum" readonly><button class="btn" data-cp="lk-hum">copiar</button></div>
-    <p class="sub" style="margin:2px 0 0">↑ dos <b>humanos</b> — veem tudo e conversam.</p>
+    <p class="sub">Um papel por link — quem entra só digita o nome. O <b>convite</b> é o texto pronto (instrução da função + link): cola na conversa com a IA e ela já entra sabendo o que fazer.</p>
+    <div id="lk-lista"></div>
     <div class="row" style="margin-top:12px">
       <button class="btn p" id="btn-novo-ag">➕ criar outro agente</button>
       <button class="btn" id="btn-instr">📋 instruções pra IA</button>
@@ -688,8 +688,6 @@ function baixaTXT(){
 function abreLinks(){
  if(!S.code)return;
  $('#lk-code').textContent=PZ.fmtCodigo(S.code);
- $('#lk-lider').value=PZ.rolUrl(S.code,'lider');
- $('#lk-hum').value=PZ.humUrl(S.code);
  renderAgs();
  $('#instr-txt').value=PZ.instrIA(S.code,S.eu?S.eu.tag:'hum',S.eu?S.eu.ag:null,PZ.boxUrl(S.code));
  $('#m-links').hidden=false;
@@ -697,14 +695,22 @@ function abreLinks(){
 function renderAgs(){
  const rev=S.sala&&S.sala.revogados&&typeof S.sala.revogados==='object'?S.sala.revogados:{};
  const ns=Array.from(new Set([1].concat(S.linksSessao))).sort((a,b)=>a-b);
- $('#lk-ags').innerHTML=ns.map(n=>{
-  const url=PZ.esc(PZ.agUrl(S.code,n));
-  if(PZ.agRevogado({revogados:rev},n))return '<div class="linkline" style="opacity:.5"><input type="text" readonly value="'+url+'" disabled><span class="tipochip tp-bloq">acesso apagado</span></div>';
-  return '<div class="linkline"><input type="text" readonly value="'+url+'"><button class="btn g" data-cv="'+n+'" title="instrução da função + link">📋 convite</button><button class="btn" data-cp-ag="'+n+'" title="só o link">🔗</button><button class="btn d" data-del="'+n+'" title="apagar este acesso">🗑</button></div><p class="sub" style="margin:2px 0 0">↑ do <b>Agente '+n+'</b>'+(n===1?' — já nasce com a sala.':' — criado agora.')+'</p>';
- }).join('');
- $('#lk-ags').querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{copiar(PZ.instrIA(S.code,'ag',+b.dataset.cv,PZ.agUrl(S.code,+b.dataset.cv)));toast('convite do Agente '+b.dataset.cv+' copiado — cola na conversa com a IA 📋')});
- $('#lk-ags').querySelectorAll('[data-cp-ag]').forEach(b=>b.onclick=()=>copiar(PZ.agUrl(S.code,+b.dataset.cpAg)));
- $('#lk-ags').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>apagarAgente(+b.dataset.del));
+ let h='<div class="lkr"><span class="nm">Agente Líder</span><span class="sp"></span><button class="btn g" id="cp-lider">📋 copiar convite</button></div>'
+  +'<p class="sub" style="margin:2px 0 10px">coordena a sala: palavra de diretriz, destrava bloqueios.</p>';
+ ns.forEach(n=>{
+  if(PZ.agRevogado({revogados:rev},n)){
+   h+='<div class="lkr off"><span class="nm">Agente '+n+'</span><span class="sp"></span><span class="tipochip tp-bloq">acesso apagado</span></div>';
+  }else{
+   h+='<div class="lkr"><span class="nm">Agente '+n+'</span><span class="sp"></span><button class="btn g" data-cv="'+n+'">📋 copiar convite</button><button class="btn d" data-del="'+n+'" title="apagar este acesso">🗑</button></div>';
+  }
+ });
+ h+='<div class="lkr" style="border-bottom:0"><span class="nm">Humanos</span><span class="sp"></span><button class="btn" id="cp-hum">🔗 copiar link</button></div>'
+  +'<p class="sub" style="margin:2px 0 0">veem tudo e conversam livre.</p>';
+ $('#lk-lista').innerHTML=h;
+ $('#cp-lider').onclick=()=>{copiar(PZ.instrIA(S.code,'lider',null,PZ.rolUrl(S.code,'lider')));toast('convite do Líder copiado 📋')};
+ $('#cp-hum').onclick=()=>copiar(PZ.humUrl(S.code));
+ $('#lk-lista').querySelectorAll('[data-cv]').forEach(b=>b.onclick=()=>{copiar(PZ.instrIA(S.code,'ag',+b.dataset.cv,PZ.agUrl(S.code,+b.dataset.cv)));toast('convite do Agente '+b.dataset.cv+' copiado — cola na conversa com a IA 📋')});
+ $('#lk-lista').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>apagarAgente(+b.dataset.del));
 }
 async function apagarAgenteFB(n){
  if(!salaRef){toast('sem banco aqui — nada foi apagado');return}
@@ -731,7 +737,7 @@ async function novoAgente(){
  S.linksSessao.push(n);
  renderAgs();
  copiar(PZ.instrIA(S.code,'ag',n,PZ.agUrl(S.code,n)));
- toast('Agente '+n+' criado — CONVITE copiado (instrução + link) 📋 já tá na lista');
+ toast('Agente '+n+' criado — convite copiado (instrução + link) 📋');
 }
 function copiar(t){
  const done=()=>toast('copiado ✓');
@@ -786,7 +792,6 @@ $('#btn-links').onclick=abreLinks;
 $('#btn-sair').onclick=()=>{salaOff();store.del('sa_sess');S.code=null;S.sala=null;S.eu=null;S.linksSessao=[];ver('v-home');renderMinhas();renderCaixas()};
 $('#btn-novo-ag').onclick=()=>{novoAgente()};
 $('#btn-instr').onclick=()=>{$('#instr-wrap').hidden=!$('#instr-wrap').hidden};
-$('#cp-lider').onclick=()=>{copiar(PZ.instrIA(S.code,'lider',null,PZ.rolUrl(S.code,'lider')));toast('convite do Líder copiado (função + link) 📋')};
 $('#apg-sim').onclick=()=>{$('#m-apagar').hidden=true;apagarAgenteFB(S.delAg)};
 $('#apg-nao').onclick=()=>{$('#m-apagar').hidden=true};
 $('#apg-nunca').onclick=()=>{store.set('sa_semconfirm','1');$('#m-apagar').hidden=true;apagarAgenteFB(S.delAg);toast('anotado — apago sem perguntar de agora em diante')};
