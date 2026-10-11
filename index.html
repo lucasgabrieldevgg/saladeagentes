@@ -791,6 +791,7 @@ function limpaAnexo(){S.anexo=null;$('#in-anexo').value='';const n=$('#anexo-nom
 async function enviar(){
  if(!S.eu||!S.sala)return;
  const c=S.refs||{};
+ const refsNoEnvio=S.refs;
  const tipo=S.tipo;
  let texto;
  if(tipo==='livre'){
@@ -820,8 +821,10 @@ async function enviar(){
  $('#btn-send').disabled=true;
  try{
   await enviarFB(m);
-  S.refs={};limpaAnexo();
-  if(tipo==='livre'){$('#c-texto').value=''}else{renderComposer()}
+  if(S.refs===refsNoEnvio){  /* se o usuário já trocou de tipo, o que ele digitou não se apaga */
+   S.refs={};limpaAnexo();
+   if(tipo==='livre'){$('#c-texto').value=''}else{renderComposer()}
+  }
  }catch(e){toast('não foi: '+e.message)}
  $('#btn-send').disabled=false;
 }
