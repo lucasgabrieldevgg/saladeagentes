@@ -136,11 +136,11 @@ ok(bibArq.length===1 && bibArq[0].n==='print.png' && bibArq[0].kb===42 && bibArq
 ok(bibLnk.length===1 && bibLnk[0].url==='https://deploy.vercel.app' && bibLnk[0].dom==='deploy.vercel.app' && bibLnk[0].mid==='bbb', 'link da prova vira item de link com domínio');
 ok(bib[0].t >= bib[bib.length-1].t, 'ordem: mais recente primeiro');
 const bib2 = PZ.anexosLinksDe({
- x1:{id:'x1',t:10,autor:'Ada',texto:'vejam https://a.com/x e de novo https://a.com/x, convite https://saladeagentes.vercel.app/?s=AG-AB1C2D&a=2 ok'},
+ x1:{id:'x1',t:10,autor:'Ada',texto:'vejam https://a.com/x e de novo https://a.com/x, convite https://saladeagentes.vercel.app/?s=AG-AB1C2D&a=2 ok, sala em https://caixa-agente-default-rtdb.firebaseio.com/boxes/AGAB1C2D/msgs.json'},
  x2:{id:'x2',t:20,autor:'Bia',texto:'https://b.com/y.',prova:'https://c.com/z'}
 });
-ok(bib2.filter(x=>x.tipo==='link').length===3, 'links únicos (dedupe) + prova conta, ponto final não entra');
-ok(bib2.every(x=>!/saladeagentes/.test(x.url||'')), 'link de convite da própria sala NÃO entra na biblioteca');
+ok(bib2.filter(x=>x.tipo==='link').length===3, 'links únicos (dedupe) + prova conta; convite e REST da própria sala fora');
+ok(bib2.every(x=>!/saladeagentes|firebaseio/.test(x.url||'')), 'convite e endereço REST da própria sala NÃO entram na biblioteca');
 ok(PZ.anexosLinksDe({}).length===0, 'sala vazia → biblioteca vazia sem quebrar');
 ok(PZ.anexosLinksDe(null).length===0, 'sem msgs → não explode');
 ok(PZ.mencaoDe({tipo:'arquivo',n:'print.png'})==='«print.png»', 'menção de arquivo com «»');

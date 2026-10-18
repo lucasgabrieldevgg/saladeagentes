@@ -591,6 +591,7 @@ const PZ={
    (fonte.match(/https?:\/\/[^\s<>"')\]]+/g)||[]).forEach(u=>{
     const url=u.replace(/[.,;:]+$/,'');
     if(/[?&]s=AG-?[A-Z0-9]{6}(&|$)/i.test(url))return; /* convite da própria sala não é conteúdo */
+    if(/^https?:\/\/[^\/]*firebaseio\.com\/boxes\//.test(url))return; /* endereço REST da própria sala também não */
     if(vistos[url])return;
     vistos[url]=1;
     itens.push({tipo:'link',url,dom:(url.match(/^https?:\/\/([^\/?#]+)/)||[])[1]||url,autor:m.autor||'—',t:m.t,mid:m.id});
