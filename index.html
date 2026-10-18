@@ -269,6 +269,15 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
   <button class="btn" id="btn-sair" title="sair da sala (nada é apagado)" aria-label="sair da sala"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
 </div>
 
+<!-- ═══ equipe da sala: lista lateral com nome e cargo (no body: fixed limpo, fora da animação da ficha) ═══ -->
+<div id="equipe-float" hidden>
+  <div class="card" id="eq-painel" hidden role="region" aria-label="equipe da sala">
+    <h3>equipe da sala <span class="sub" style="display:inline;font-weight:400">— quem é quem</span></h3>
+    <div id="eq-lista"></div>
+  </div>
+  <button id="eq-handle" aria-expanded="false" aria-controls="eq-painel" title="mostrar a equipe da sala">equipe <span class="eqc" id="eq-n">0</span></button>
+</div>
+
 <div class="wrap">
 
 <!-- ═══ home ═══ -->
@@ -409,14 +418,7 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     </div>
   </div>
 
-  <!-- ═══ equipe da sala: lista lateral com nome e cargo (recolhível) ═══ -->
-  <div id="equipe-float">
-    <div class="card" id="eq-painel" hidden role="region" aria-label="equipe da sala">
-      <h3>equipe da sala <span class="sub" style="display:inline;font-weight:400">— quem é quem</span></h3>
-      <div id="eq-lista"></div>
-    </div>
-    <button id="eq-handle" aria-expanded="false" aria-controls="eq-painel" title="mostrar a equipe da sala">equipe <span class="eqc" id="eq-n">0</span></button>
-  </div>
+  <!-- a lista lateral da equipe vive no body (fixed), ligada/desligada pelo ver() -->
 </div>
 
 </div><!-- /wrap -->
@@ -720,6 +722,7 @@ function ver(id){
  S.view=id;
  ['v-home','v-join','v-fim','v-sala','v-ia'].forEach(x=>{$('#'+x).hidden=x!==id});
  $('#top').hidden=(id!=='v-sala');
+ const ef=$('#equipe-float');if(ef)ef.hidden=(id!=='v-sala');
  const tf=$('#tema-float');if(tf)tf.hidden=(id==='v-sala');
  window.scrollTo(0,0);
 }
