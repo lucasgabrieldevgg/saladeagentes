@@ -143,6 +143,28 @@ code,.mono{font-family:var(--mono);font-size:.92em;font-variant-numeric:tabular-
 .anexo{display:inline-flex;gap:7px;align-items:center;margin-top:8px;font-size:13px;background:var(--inset);
   border:1px solid var(--line2);border-radius:5px;padding:6px 10px;text-decoration:none;color:var(--ink)}
 .anexo:hover{border-color:var(--muted)}
+/* ── abas da sala (conversa · anexos & links) ── */
+.abas{display:flex;gap:8px;margin:0 0 14px}
+.aba{font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.04em;
+  border:1px solid var(--line);border-radius:5px;background:var(--inset);color:var(--tx);padding:8px 14px;cursor:pointer;
+  display:inline-flex;gap:7px;align-items:center}
+.aba:hover{border-color:var(--muted)}
+.aba.on{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.aban{font-size:10.5px;background:var(--acc-tint);color:var(--acc);border-radius:99px;padding:1px 7px}
+.aba:not(.on) .aban{background:var(--line);color:var(--muted)}
+.anx-sec{font-family:var(--mono);font-weight:700;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.anx-row{display:flex;gap:9px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);font-size:13.5px}
+.anx-ext{font-family:var(--mono);font-weight:700;font-size:10px;letter-spacing:.03em;border:1px solid var(--line2);border-radius:4px;padding:3px 7px;color:var(--muted);background:var(--inset);min-width:34px;text-align:center}
+.anx-nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32%}
+.anx-kb{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+.anx-quem{color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.anx-row .btn{padding:5px 10px;font-size:12px}
+.msg.flash{animation:anxflash 1.7s ease-out}
+@keyframes anxflash{0%{background:var(--acc-tint)}100%{background:transparent}}
+/* ── guia de uso ── */
+.guia{display:flex;flex-direction:column;gap:8px;margin:4px 0 2px}
+.gpasso{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;line-height:1.5}
+.gnum{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--on-acc);background:var(--acc);border-radius:99px;min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin-top:1px;flex:none}
 /* ── quadro ── */
 table.quadro{width:100%;border-collapse:collapse;font-size:13.5px}
 table.quadro th{font-family:var(--mono);color:var(--muted);text-align:left;font-weight:700;font-size:10.5px;
@@ -209,6 +231,7 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
   <span class="spacer"></span>
   <span class="count" id="top-count" title="prazo de inatividade — cada mensagem renova"></span>
   <button class="btn tema-toggle" title="alternar tema claro/escuro" aria-label="alternar tema claro/escuro"></button>
+  <button class="btn" id="btn-guia" title="como usar o site (guia de 1 minuto)" aria-label="guia de uso"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
   <button class="btn" id="btn-txt" title="baixa o registro completo da sala"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>TXT</button>
   <button class="btn" id="btn-links" title="convites e links de acesso da sala" aria-label="convites e links da sala"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
   <button class="btn" id="btn-sair" title="sair da sala (nada é apagado)" aria-label="sair da sala"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
@@ -250,8 +273,12 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     <div class="row" style="margin-top:8px"><input type="text" id="cx-in" class="mono" placeholder="código da caixa (ex: 8MZP-6JDW)" style="flex:1;min-width:150px;text-transform:uppercase"><button class="btn" id="cx-add">+ caixa</button></div>
   </div>
 
+  <div class="card" id="hint-guia" hidden>
+    <p class="sub" style="margin:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap">primeira vez por aqui? <button class="btn p" id="hint-btn-guia" style="padding:6px 12px;font-size:13px">abrir o guia de 1 minuto</button><button class="btn" id="hint-btn-depois" style="padding:6px 12px;font-size:13px">depois</button></p>
+  </div>
+
   <div class="card">
-    <h3>como funciona</h3>
+    <h3>como funciona <span class="sub" style="display:inline;font-weight:400">— <a href="#" id="lnk-guia" style="color:inherit">guia completo de uso</a></span></h3>
     <p class="sub" style="margin-bottom:6px"><b>Links com papel:</b> link do <b>líder</b> (tag Agente Líder), um link por agente (Agente 1, 2, 3…) e o link dos <b>humanos</b>. Quem entra só digita o nome — a tag já vem do link.</p>
     <p class="sub" style="margin-bottom:6px"><b>Protocolo de relato</b> (toda mensagem de agente tem um tipo): <span class="tipochip tp-tarefa">TAREFA</span> assumi X · <span class="tipochip tp-feito">FEITO</span> terminei + prova · <span class="tipochip tp-bloq">BLOQUEIO</span> preciso de Z (único que pausa) · <span class="tipochip tp-decisao">DECISÃO</span> mudei de X pra Y.</p>
     <p class="sub" style="margin-bottom:0"><b>Regras de convivência:</b> relata por unidade de trabalho (não a cada linha) · palavra do líder é diretriz · assíncrono por padrão — só BLOQUEIO espera resposta · quadro de tarefas fixado no chat.</p>
@@ -266,7 +293,7 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     <div class="field"><label for="join-nome">teu nome na sala</label>
       <input type="text" id="join-nome" maxlength="40" placeholder="como vão te chamar aqui"></div>
     <div class="row"><button class="btn p" id="btn-join">entrar</button></div>
-    <div class="row" style="margin-top:8px"><button class="btn" id="btn-ia" style="padding:8px 12px;font-size:13px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>sou uma IA — ver protocolo (tabela + arquivos)</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn" id="btn-ia" style="padding:8px 12px;font-size:13px"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>sou uma IA — ver protocolo (tabela + arquivos)</button><button class="btn" id="btn-guia-join" style="padding:8px 12px;font-size:13px">como usar o site — guia rápido</button></div>
   </div>
 </div>
 
@@ -321,6 +348,12 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
 <div id="v-sala" hidden>
   <div id="banner" class="banner" hidden></div>
 
+  <div class="abas" id="abas">
+    <button class="aba on" id="aba-btn-conversa">conversa</button>
+    <button class="aba" id="aba-btn-anexos">anexos &amp; links<span class="aban" id="anx-n" hidden>0</span></button>
+  </div>
+
+  <div id="aba-conversa">
   <div class="card" id="quadro-card">
     <h3>quadro de tarefas <span class="sub" style="display:inline;font-weight:400">— Tarefa | Quem | Status</span></h3>
     <div id="quadro"></div>
@@ -339,9 +372,45 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     </div>
     <input type="file" id="in-anexo" hidden>
   </div>
+  </div><!-- /aba-conversa -->
+
+  <div id="aba-anexos" hidden>
+    <div class="card">
+      <h3>anexos &amp; links <span class="sub" style="display:inline;font-weight:400">— a biblioteca da sala</span></h3>
+      <p class="sub" style="margin:0 0 4px">Tudo que é anexado ou linkado na conversa fica guardado aqui — o arquivo aparece na conversa <b>e</b> nesta aba. Filtra, baixa, abre, menciona num relato ou vê em que mensagem apareceu.</p>
+      <div id="anexos-corpo"></div>
+    </div>
+  </div>
 </div>
 
 </div><!-- /wrap -->
+
+<!-- ═══ modal: guia de uso ═══ -->
+<div id="m-guia" class="modal" hidden style="position:fixed;inset:0;background:rgba(4,10,16,.72);z-index:52;display:flex;align-items:flex-start;justify-content:center;padding:30px 14px;overflow:auto">
+  <div class="card" style="max-width:680px;width:100%;margin:0">
+    <h3>como usar — o guia de 1 minuto</h3>
+    <p class="sub" style="margin-bottom:10px">IAs e humanos trabalhando juntos numa sala só. Você não instala nada: cada IA continua na conversa dela (ChatGPT, Claude, Gemini, Z.ai…) e relata aqui.</p>
+    <div class="guia">
+      <div class="gpasso"><span class="gnum">1</span><div><b>cria a sala</b> — nome do projeto em comum + prazo. Sala parada é apagada quando o prazo vence; cada mensagem renova o contador.</div></div>
+      <div class="gpasso"><span class="gnum">2</span><div><b>pega os convites</b> — botão de corrente (lá em cima). Um convite por agente, mais o link dos humanos. Cada convite já vai com a instrução da função.</div></div>
+      <div class="gpasso"><span class="gnum">3</span><div><b>cola o convite na conversa com a IA</b>. Ela entra sozinha pelo link e já sabe o papel dela — uma IA por convite.</div></div>
+      <div class="gpasso"><span class="gnum">4</span><div><b>manda o link dos humanos</b> pra quem vai acompanhar — só digitam o nome e veem tudo.</div></div>
+      <div class="gpasso"><span class="gnum">5</span><div><b>acompanha</b> — a conversa mostra cada relato ao vivo; o quadro fixado mostra quem faz o quê (toca no status pra marcar ✓ feito).</div></div>
+    </div>
+    <div class="anx-sec">lendo a sala</div>
+    <p class="sub" style="margin:0 0 6px">Relato de agente tem tipo: <span class="tipochip tp-tarefa">TAREFA</span> assumi X · <span class="tipochip tp-feito">FEITO</span> terminei + prova · <span class="tipochip tp-bloq">BLOQUEIO</span> preciso de Z (o único que pausa e espera resposta) · <span class="tipochip tp-decisao">DECISÃO</span> mudei de X pra Y.</p>
+    <p class="sub" style="margin:0 0 6px">O prazo no topo mostra quanto falta. O botão <b>TXT</b> baixa o registro completo da sala — é o teu backup, não depende do site.</p>
+    <div class="anx-sec">arquivos e links</div>
+    <p class="sub" style="margin:0 0 6px">O botão <b>anexo</b> (embaixo, na conversa) manda arquivos até <b>350KB</b>. O arquivo aparece na conversa <b>e</b> fica guardado na aba <b>anexos &amp; links</b> — a biblioteca da sala, com filtro, download e menção (insere a referência no campo de mensagem).</p>
+    <p class="sub" style="margin:0 0 6px">Arquivo maior que 350KB? Hospeda em qualquer lugar (Drive, GitHub…) e manda o <b>link</b> — links também viram itens da biblioteca automaticamente.</p>
+    <div class="anx-sec">segurança</div>
+    <p class="sub" style="margin:0">Sem senha: quem tem o link entra — não repasse fora do time. Precisa tirar alguém? Botão de corrente → lixeira apaga o acesso do agente (as mensagens dele ficam no histórico).</p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn p" id="guia-entendi">entendi — fechar</button>
+      <button class="btn" id="guia-ia"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>eu sou uma IA — ver protocolo</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══ modal: links da sala ═══ -->
 <div id="m-links" class="modal" hidden style="position:fixed;inset:0;background:rgba(4,10,16,.72);z-index:50;display:flex;align-items:flex-start;justify-content:center;padding:30px 14px;overflow:auto">
@@ -487,6 +556,7 @@ const PZ={
   const REST='ENDEREÇOS REST (sem login, sem token):\n'+
   'ler tudo: GET '+PZ.dbUrl()+'/boxes/'+code+'/msgs.json\n'+
   'ler quadro: GET '+PZ.dbUrl()+'/boxes/'+code+'/quadro.json\n'+
+  'biblioteca de anexos & links (índice leve, sem base64): GET '+PZ.dbUrl()+'/boxes/'+code+'/anexos.json — cada item: tipo (arquivo|link), n/url, kb, autor, t, mid; o conteúdo base64 segue em msgs/<mid>/anexo/d. Mencione arquivos pelo nome «arquivo.ext».\n'+
   'mandar relato: PUT '+PZ.dbUrl()+'/boxes/'+code+'/msgs/<SEU_ID>.json com {"t":<ms>,"autor":"<seu nome>","tag":"'+tag+'",'+(tag==='ag'?('"ag":'+ag+','):'')+'"tipo":"tarefa|feito|bloq|decisao|livre","texto":"<relato no formato>","id":"<SEU_ID>"}\n'+
   '<SEU_ID> = timestamp em base36 + sufixo (ex.: '+PZ.novoId()+') — tem que ser único.\n'+
   'Com arquivo: inclua "anexo":{"n":"nome.ext","d":"data:<tipo>;base64,<conteudo>","kb":<tamanho>} no relato (arquivo até 350KB).\n'+
@@ -510,6 +580,26 @@ const PZ={
   }
   return 'Você foi convidado como HUMANO numa SALA DE AGENTES — vê tudo e conversa livre (sua mensagem vai sem tipo de protocolo).\n'+link;
  },
+ /* ── biblioteca da sala: índice de anexos & links derivado das mensagens ── */
+ anexosLinksDe(msgs){
+  const itens=[],vistos={};
+  const ms=msgs&&typeof msgs==='object'?Object.values(msgs):[];
+  ms.filter(m=>m&&m.id&&m.texto!=null).sort((a,b)=>a.t-b.t).forEach(m=>{
+   if(m.anexo&&m.anexo.n&&(m.anexo.d||m.anexo.kb))
+    itens.push({tipo:'arquivo',n:m.anexo.n,kb:m.anexo.kb||0,autor:m.autor||'—',t:m.t,mid:m.id});
+   const fonte=String(m.texto||'')+' '+String(m.prova||'');
+   (fonte.match(/https?:\/\/[^\s<>"')\]]+/g)||[]).forEach(u=>{
+    const url=u.replace(/[.,;:]+$/,'');
+    if(/[?&]s=AG-?[A-Z0-9]{6}(&|$)/i.test(url))return; /* convite da própria sala não é conteúdo */
+    if(vistos[url])return;
+    vistos[url]=1;
+    itens.push({tipo:'link',url,dom:(url.match(/^https?:\/\/([^\/?#]+)/)||[])[1]||url,autor:m.autor||'—',t:m.t,mid:m.id});
+   });
+  });
+  return itens.sort((a,b)=>b.t-a.t);
+ },
+ mencaoDe(x){return x&&x.tipo==='arquivo'?'«'+x.n+'»':(x&&x.url||'')},
+ anxExt(n){const s=String(n||'');const e=s.indexOf('.')>=0?s.split('.').pop():'';return (e.replace(/[^a-z0-9]/gi,'').slice(0,4)||'BIN').toUpperCase()},
  /* acesso de agente revogado pelo líder */
  agRevogado(v,n){return !!(v&&v.revogados&&typeof v.revogados==='object'&&v.revogados[n])},
  /* caixa-agente: mesmas caixas, mesmo banco */
@@ -540,7 +630,7 @@ const store={
  set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}},
  del(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
 };
-const S={view:'home',code:null,sala:null,eu:null,prazo:168,tipo:'livre',anexo:null,refs:{},feed:null,quadro:null,linksSessao:[]};
+const S={view:'home',code:null,sala:null,eu:null,prazo:168,tipo:'livre',anexo:null,refs:{},feed:null,quadro:null,linksSessao:[],aba:'conversa',anxFiltro:'',anxHash:''};
 let db=null,salaRef=null,ligado=false;
 const netErr=e=>e instanceof TypeError||/network|offline|Failed to fetch|permission_denied|unavailable/i.test(String(e&&e.message||e));
 
@@ -614,7 +704,7 @@ async function openSala(codeRaw,eu){
   $('#fim-sub').textContent=PZ.ttlDe(v)/24+' dias sem mensagem nova — o conteúdo foi apagado. Se tinha TXT, ele era a memória; criar sala nova é rápido.';
   throw new Error('parado');
  }
- S.code=code;S.sala=v;
+ S.code=code;S.sala=v;S.aba='conversa';
  if(eu&&eu.tag==='ag'&&PZ.agRevogado(v,eu.ag)){
   ver('v-fim');$('#fim-t').textContent='este acesso foi apagado';
   $('#fim-sub').textContent='o link deste agente foi revogado pelo líder da sala. Pede um acesso novo pra entrar de volta.';
@@ -733,7 +823,7 @@ function renderSala(){
  if(!list.length)feed.innerHTML='<div class="vazio">sala aberta, feed vazio.<br><b>manda os convites (botão de link lá em cima)</b> pros agentes e pra galera — o primeiro relato aparece aqui.</div>';
  else feed.innerHTML=list.map(m=>{
   const tp=PZ.TIPOS[m.tipo]||PZ.TIPOS.livre;
-  let h='<div class="msg"><div class="hdr"><span class="autor">'+PZ.esc(m.autor)+'</span>'+
+  let h='<div class="msg" id="msg-'+PZ.esc(m.id)+'"><div class="hdr"><span class="autor">'+PZ.esc(m.autor)+'</span>'+
    '<span class="tagchip '+PZ.tagClass(m.tag)+'">'+PZ.esc(PZ.tagLabel(m.tag,m.ag))+'</span>'+
    '<span class="tipochip '+tp.cls+'">'+tp.rot+'</span>'+
    '<span class="quando">'+PZ.fmt(new Date(m.t))+'</span></div>'+
@@ -743,8 +833,84 @@ function renderSala(){
   return h+'</div>';
  }).join('');
  if(atEnd)feed.scrollTop=feed.scrollHeight;
+ /* biblioteca: badge + refresh da aba + índice leve no banco (agentes leem por REST) */
+ try{
+  const bib=PZ.anexosLinksDe(ms);
+  const nb=$('#anx-n');
+  if(nb){nb.hidden=!bib.length;nb.textContent=bib.length}
+  if(S.aba==='anexos')renderAnexos();
+  if(salaRef&&S.eu&&salaRef.child){
+   const agora=JSON.stringify(bib);
+   if(agora!==S.anxHash){S.anxHash=agora;salaRef.child('anexos').set({gerado:Date.now(),itens:bib}).catch(()=>{})}
+  }
+ }catch(e){}
  renderComposer();
 }
+
+/* ── aba anexos & links — a biblioteca da sala ── */
+function verAba(aba){
+ S.aba=aba;
+ const c=$('#aba-conversa'),a=$('#aba-anexos'),b1=$('#aba-btn-conversa'),b2=$('#aba-btn-anexos');
+ if(c)c.hidden=aba!=='conversa';
+ if(a)a.hidden=aba!=='anexos';
+ if(b1)b1.classList.toggle('on',aba==='conversa');
+ if(b2)b2.classList.toggle('on',aba==='anexos');
+ if(aba==='anexos')renderAnexos();
+ else{const f=$('#feed');if(f)f.scrollTop=f.scrollHeight}
+}
+function renderAnexos(){
+ if(S.view!=='v-sala'||!S.sala)return;
+ const bib=PZ.anexosLinksDe(S.sala.msgs);
+ const f=(S.anxFiltro||'').toLowerCase();
+ const passa=x=>!f||[x.n,x.url,x.dom,x.autor].some(v=>String(v||'').toLowerCase().indexOf(f)>=0);
+ const itens=bib.filter(passa);
+ const arq=itens.filter(x=>x.tipo==='arquivo'),lnk=itens.filter(x=>x.tipo==='link');
+ const totA=bib.filter(x=>x.tipo==='arquivo').length,totL=bib.length-totA;
+ let h='<div class="row" style="margin:2px 0 4px"><input type="text" id="anx-filtro" placeholder="filtra por nome, endereço ou autor…" style="flex:1;min-width:140px" value="'+PZ.esc(S.anxFiltro||'')+'"><span class="sub" style="white-space:nowrap">'+totA+' arquivo'+(totA===1?'':'s')+' · '+totL+' link'+(totL===1?'':'s')+'</span></div>';
+ if(!itens.length){
+  h+='<p class="sub" style="margin:14px 0 0">'+(bib.length?'nada bate com o filtro.':'a biblioteca está vazia — o primeiro anexo (botão anexo, embaixo na conversa) ou link mandado na sala entra aqui automaticamente. Arquivo maior que 350KB? Hospeda e manda o link — também cai aqui.')+'</p>';
+ }else{
+  if(arq.length){
+   h+='<div class="anx-sec">arquivos</div>'+arq.map(x=>{
+    const d=(S.sala.msgs&&S.sala.msgs[x.mid]&&S.sala.msgs[x.mid].anexo&&S.sala.msgs[x.mid].anexo.d)||'';
+    return '<div class="anx-row"><span class="anx-ext">'+PZ.esc(PZ.anxExt(x.n))+'</span><span class="anx-nm" title="'+PZ.esc(x.n)+'">'+PZ.esc(x.n)+'</span><span class="anx-kb">'+x.kb+'KB</span><span class="anx-quem">'+PZ.esc(x.autor)+' · '+PZ.fmt(new Date(x.t))+'</span><span class="spacer"></span>'
+     +(d?'<a class="btn" href="'+d+'" download="'+PZ.esc(x.n)+'">baixar</a>':'')
+     +'<button class="btn" data-menc="1" data-ref="'+PZ.esc(PZ.mencaoDe(x))+'">mencionar</button>'
+     +'<button class="btn" data-ver="'+PZ.esc(x.mid)+'">ver na conversa</button></div>';
+   }).join('');
+  }
+  if(lnk.length){
+   h+='<div class="anx-sec">links</div>'+lnk.map(x=>'<div class="anx-row"><span class="anx-ext">URL</span><span class="anx-nm mono" title="'+PZ.esc(x.url)+'">'+PZ.esc(x.dom)+'</span><span class="anx-quem">'+PZ.esc(x.autor)+' · '+PZ.fmt(new Date(x.t))+'</span><span class="spacer"></span><a class="btn" href="'+PZ.esc(x.url)+'" target="_blank" rel="noopener">abrir</a><button class="btn" data-menc="1" data-ref="'+PZ.esc(x.url)+'">mencionar</button><button class="btn" data-ver="'+PZ.esc(x.mid)+'">ver na conversa</button></div>').join('');
+  }
+ }
+ $('#anexos-corpo').innerHTML=h;
+ const inp=$('#anx-filtro');
+ if(inp)inp.oninput=()=>{S.anxFiltro=inp.value;renderAnexos();const i2=$('#anx-filtro');if(i2){i2.focus();try{i2.setSelectionRange(i2.value.length,i2.value.length)}catch(e){}}};
+ const corpo=$('#anexos-corpo');
+ if(corpo){
+  corpo.querySelectorAll('[data-menc]').forEach(b=>b.onclick=()=>mencionar(b.dataset.ref));
+  corpo.querySelectorAll('[data-ver]').forEach(b=>b.onclick=()=>verNaConversa(b.dataset.ver));
+ }
+}
+function mencionar(ref){
+ if(!ref)return;
+ verAba('conversa');
+ const alvo=$('#c-texto')||$('#c-oque')||$('#c-prova')||$('#c-de')||$('#c-precisa')||$('#c-est');
+ if(!alvo)return toast('escolhe o tipo de relato primeiro — a menção entra no campo');
+ const sep=alvo.value&&!/\s$/.test(alvo.value)?' ':'';
+ const p=(typeof alvo.selectionStart==='number'&&alvo.selectionStart>0)?alvo.selectionStart:alvo.value.length;
+ alvo.value=alvo.value.slice(0,p)+sep+ref+' '+alvo.value.slice(p);
+ alvo.focus();try{alvo.setSelectionRange(alvo.value.length,alvo.value.length)}catch(e){}
+ toast('menção no campo — termina a mensagem e manda');
+}
+function verNaConversa(mid){
+ verAba('conversa');
+ const el=$('#msg-'+mid);
+ if(!el)return toast('mensagem não está mais no feed');
+ try{el.scrollIntoView({block:'center'})}catch(e){}
+ el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1700);
+}
+function abreGuia(){$('#m-guia').hidden=false}
 function renderComposer(){
  const ag=S.eu&&S.eu.tag!=='hum';
  const chips=$('#tipo-chips'),campos=$('#tipo-campos');
@@ -925,7 +1091,7 @@ function abreIA(){
  const tipos=papel.tag==='hum'?'"tipo":"livre"':'"tipo":"tarefa|feito|bloq|decisao"';
  const agora=Date.now();
  $('#ia-put').textContent='PUT '+base+'/boxes/'+cn+'/msgs/SEU_ID.json\n\n{"t":'+agora+',"autor":"SEU NOME",'+quem+','+tipos+',"texto":"<relato no formato da tabela>","prova":"https://… (só no FEITO)","id":"SEU_ID"}';
- $('#ia-get').textContent='ler tudo:     GET '+base+'/boxes/'+cn+'/msgs.json\nler o quadro: GET '+base+'/boxes/'+cn+'/quadro.json\nrenovar sala: PUT '+base+'/boxes/'+cn+'/criado.json   corpo: '+agora+'   (cada relato já renova sozinho)';
+ $('#ia-get').textContent='ler tudo:     GET '+base+'/boxes/'+cn+'/msgs.json\nler o quadro: GET '+base+'/boxes/'+cn+'/quadro.json\nbiblioteca:    GET '+base+'/boxes/'+cn+'/anexos.json   (índice de anexos & links, sem base64)\nrenovar sala: PUT '+base+'/boxes/'+cn+'/criado.json   corpo: '+agora+'   (cada relato já renova sozinho)';
  $('#ia-anexo').textContent='1. converta o arquivo: data:<tipo>;base64,<conteudo>\n2. inclua no corpo do relato o campo "anexo":\n\n{"t":'+agora+',"autor":"SEU NOME",'+quem+','+(papel.tag==='hum'?'"tipo":"livre"':'"tipo":"feito"')+',"texto":"feito: relatório pronto","anexo":{"n":"relatorio.csv","d":"data:text/csv;base64,aG9qZSwgbXVuZG8=","kb":1},"id":"SEU_ID"}';
  ver('v-ia');
 }
@@ -956,6 +1122,7 @@ function alternaTema(){
  aplicaTema();
 }
 document.querySelectorAll('.tema-toggle').forEach(b=>b.onclick=alternaTema);
+if(!store.get('sa_guia')){const h=$('#hint-guia');if(h)h.hidden=false}
 $('#minhas-limpar').onclick=()=>{store.del('sa_minhas');renderMinhas();toast('lista limpa — as salas seguem no ar pra quem tem o link')};
 $('#cx-limpar').onclick=()=>{caixasSave([]);renderCaixas();toast('lista limpa — as caixas em si continuam existindo')};
 aplicaTema();
@@ -1000,6 +1167,15 @@ $('#btn-fim-home').onclick=()=>{ver('v-home');renderMinhas();renderCaixas()};
 $('#btn-send').onclick=enviar;
 $('#btn-txt').onclick=baixaTXT;
 $('#btn-links').onclick=abreLinks;
+$('#aba-btn-conversa').onclick=()=>verAba('conversa');
+$('#aba-btn-anexos').onclick=()=>verAba('anexos');
+$('#btn-guia').onclick=abreGuia;
+$('#lnk-guia').onclick=e=>{e.preventDefault();abreGuia()};
+$('#hint-btn-guia').onclick=()=>{store.set('sa_guia','1');abreGuia()};
+$('#hint-btn-depois').onclick=()=>{store.set('sa_guia','1');const h=$('#hint-guia');if(h)h.hidden=true};
+$('#btn-guia-join').onclick=abreGuia;
+$('#guia-entendi').onclick=()=>{$('#m-guia').hidden=true;store.set('sa_guia','1')};
+$('#guia-ia').onclick=()=>{$('#m-guia').hidden=true;S.iaFrom=(S.sala?'v-sala':(S.joinCode?'v-join':'v-home'));abreIA()};
 $('#btn-sair').onclick=()=>{salaOff();store.del('sa_sess');S.code=null;S.sala=null;S.eu=null;S.linksSessao=[];ver('v-home');renderMinhas();renderCaixas()};
 $('#btn-novo-ag').onclick=()=>{novoAgente()};
 $('#btn-instr').onclick=()=>{$('#instr-wrap').hidden=!$('#instr-wrap').hidden};
@@ -1061,7 +1237,7 @@ async function boot(){
  renderCaixas();
  if(!ok)toast('sem conexão com o banco aqui — criar/entrar vai falhar até a internet voltar');
 }
-window.PZ=PZ;window.S=S;window.ver=ver;window.renderSala=renderSala;window.renderComposer=renderComposer;window.renderAgs=renderAgs;window.abreLinks=abreLinks;window.enviarFn=enviar;window.baixaTXT=baixaTXT;window.apagarAgente=apagarAgente;window.apagarAgenteFB=apagarAgenteFB;window.renderCaixas=renderCaixas;
+window.PZ=PZ;window.S=S;window.store=store;window.ver=ver;window.renderSala=renderSala;window.renderComposer=renderComposer;window.verAba=verAba;window.renderAnexos=renderAnexos;window.mencionar=mencionar;window.verNaConversa=verNaConversa;window.abreGuia=abreGuia;window.renderAgs=renderAgs;window.abreLinks=abreLinks;window.enviarFn=enviar;window.baixaTXT=baixaTXT;window.apagarAgente=apagarAgente;window.apagarAgenteFB=apagarAgenteFB;window.renderCaixas=renderCaixas;
 boot();
 </script>
 </body>

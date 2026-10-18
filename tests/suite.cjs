@@ -129,6 +129,24 @@ ok(txt.indexOf('#QUADRO NO MOMENTO DA EXPORTAÇÃO') > 0 && txt.indexOf('montar 
 ok(txt.indexOf('expira em') > 0, 'prazo no cabeçalho');
 ok(PZ.txtDaSala({nome:'s', codigo:'AGXXZZ99', msgs:{}, quadro:{}}, AGORA).indexOf('#QUADRO') < 0, 'sem quadro → sem bloco de quadro');
 
+secao('CORE: biblioteca da sala — anexos & links (índice derivado)');
+const bib = PZ.anexosLinksDe(salaTxt.msgs);
+const bibArq = bib.filter(x=>x.tipo==='arquivo'), bibLnk = bib.filter(x=>x.tipo==='link');
+ok(bibArq.length===1 && bibArq[0].n==='print.png' && bibArq[0].kb===42 && bibArq[0].mid==='bbb' && bibArq[0].autor==='Ada', 'anexo vira item de arquivo com metadados e dono');
+ok(bibLnk.length===1 && bibLnk[0].url==='https://deploy.vercel.app' && bibLnk[0].dom==='deploy.vercel.app' && bibLnk[0].mid==='bbb', 'link da prova vira item de link com domínio');
+ok(bib[0].t >= bib[bib.length-1].t, 'ordem: mais recente primeiro');
+const bib2 = PZ.anexosLinksDe({
+ x1:{id:'x1',t:10,autor:'Ada',texto:'vejam https://a.com/x e de novo https://a.com/x, convite https://saladeagentes.vercel.app/?s=AG-AB1C2D&a=2 ok'},
+ x2:{id:'x2',t:20,autor:'Bia',texto:'https://b.com/y.',prova:'https://c.com/z'}
+});
+ok(bib2.filter(x=>x.tipo==='link').length===3, 'links únicos (dedupe) + prova conta, ponto final não entra');
+ok(bib2.every(x=>!/saladeagentes/.test(x.url||'')), 'link de convite da própria sala NÃO entra na biblioteca');
+ok(PZ.anexosLinksDe({}).length===0, 'sala vazia → biblioteca vazia sem quebrar');
+ok(PZ.anexosLinksDe(null).length===0, 'sem msgs → não explode');
+ok(PZ.mencaoDe({tipo:'arquivo',n:'print.png'})==='«print.png»', 'menção de arquivo com «»');
+ok(PZ.mencaoDe({tipo:'link',url:'https://a.com'})==='https://a.com', 'menção de link é o endereço cru');
+ok(PZ.anxExt('relatorio.final.v2.csv')==='CSV' && PZ.anxExt('arquivo')==='BIN', 'extensão exibida: último pedaço, sem ponto');
+
 secao('CORE: links e instruções pra IA');
 const URLSALA = 'https://saladeagentes.vercel.app/?s=AG-AB1C2D';
 ok(PZ.rolUrl('AGAB1C2D', 'lider').indexOf('?s=AG-AB1C2D&r=lider') > 0, 'link do líder');
@@ -238,6 +256,47 @@ w.renderSala();await tick(20);
 ok($('#quadro [data-st]') !== null, 'quadro: humano/líder pode trocar status');
 w.S.eu = {nome:'Ada', tag:'ag', ag:1};
 w.renderSala();await tick(20);
+
+secao('DOM: aba anexos & links (a biblioteca da sala)');
+ok($('#aba-btn-conversa') && $('#aba-btn-anexos') && $('#aba-anexos') && $('#anexos-corpo'), 'aba anexos existe no DOM da sala');
+ok($('#anx-n') && $('#anx-n').textContent === '2' && $('#anx-n').hidden === false, 'badge conta arquivo+link da fixture (2)');
+w.verAba('anexos');await tick(20);
+ok($('#aba-anexos').hidden === false && $('#aba-conversa').hidden === true, 'verAba troca conversa por anexos');
+ok($('#anexos-corpo').textContent.indexOf('print.png') >= 0 && $('#anexos-corpo').textContent.indexOf('42KB') >= 0, 'arquivo da fixture listado com tamanho');
+ok($('#anexos-corpo').textContent.indexOf('deploy.vercel.app') >= 0, 'link da prova listado na biblioteca');
+ok($('#anexos-corpo').innerHTML.indexOf('download="print.png"') >= 0, 'download aponta pro nome do arquivo');
+ok($('#anexos-corpo').textContent.indexOf('mencionar') >= 0 && $('#anexos-corpo').textContent.indexOf('ver na conversa') >= 0, 'botões mencionar e ver na conversa');
+const bMenc = $('#anexos-corpo [data-menc]');bMenc.click();await tick(20);
+ok($('#aba-conversa').hidden === false, 'mencionar volta pra conversa');
+ok($('#c-oque') && $('#c-oque').value.indexOf('«print.png»') >= 0, 'menção «print.png» inserida no campo do relato');
+w.verAba('anexos');await tick(10);
+const bVer = $('#anexos-corpo [data-ver]');bVer.click();await tick(20);
+ok($('#aba-conversa').hidden === false && !!$('#msg-bbb'), 'ver na conversa volta e acha a msg do anexo (id no feed)');
+w.S.anxFiltro = 'nada-bate';w.renderAnexos();await tick(10);
+ok($('#anexos-corpo').textContent.indexOf('nada bate com o filtro') >= 0, 'filtro sem resultado honesto');
+w.S.anxFiltro = '';
+
+secao('DOM: guia de uso (pra quem não conhece o site)');
+ok($('#m-guia') && $('#m-guia').hidden === true, 'modal do guia começa fechado');
+ok($('#hint-guia') && $('#hint-guia').hidden === false, 'primeira visita mostra o convite do guia na home');
+$('#hint-btn-guia').click();await tick(10);
+ok($('#m-guia').hidden === false, 'hint abre o guia');
+ok($('#m-guia').textContent.indexOf('guia de 1 minuto') >= 0 && $('#m-guia').textContent.indexOf('350KB') >= 0, 'guia explica os passos e o limite de anexo');
+ok($('#m-guia').textContent.indexOf('anexos & links') >= 0, 'guia apresenta a biblioteca de anexos');
+ok($('#m-guia').textContent.indexOf('cola o convite na conversa com a IA') >= 0, 'guia explica o fluxo do convite');
+$('#guia-entendi').click();await tick(10);
+ok($('#m-guia').hidden === true, 'entendi fecha o guia');
+ok(w.store.get('sa_guia') === '1', 'guia marcado como visto (não enche o saco de novo)');
+$('#btn-guia').click();await tick(10);
+ok($('#m-guia').hidden === false, 'botão ? da sala reabre o guia a qualquer momento');
+$('#guia-entendi').click();
+
+secao('DOM: modo IA — biblioteca no REST');
+w.abreIA();await tick(20);
+ok($('#ia-get').textContent.indexOf('/anexos.json') >= 0, 'REST da biblioteca documentado no modo IA');
+ok(PZ.instrIA('AGAB1C2D','ag',1,'https://saladeagentes.vercel.app/?s=AG-AB1C2D&a=1',true).indexOf('/anexos.json') >= 0, 'instruções REST da IA mencionam a biblioteca');
+ok(w.S.sala && w.verAba !== undefined, 'estado segue são depois de abrir o modo IA');
+w.ver('v-sala');await tick(10);
 
 secao('DOM: composer do agente (4 tipos, FEITO com prova)');
 const chipsTxt = $$('#tipo-chips .chip').map(b => b.textContent).join('|');
