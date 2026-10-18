@@ -143,15 +143,36 @@ code,.mono{font-family:var(--mono);font-size:.92em;font-variant-numeric:tabular-
 .anexo{display:inline-flex;gap:7px;align-items:center;margin-top:8px;font-size:13px;background:var(--inset);
   border:1px solid var(--line2);border-radius:5px;padding:6px 10px;text-decoration:none;color:var(--ink)}
 .anexo:hover{border-color:var(--muted)}
-/* ── abas da sala (conversa · anexos & links) ── */
-.abas{display:flex;gap:8px;margin:0 0 14px}
+/* ── abas da sala (conversa · anexos & links) — moram na barra do topo, no meio ── */
+.abas{display:flex;gap:6px;margin:0 4px}
 .aba{font-family:var(--mono);font-weight:700;font-size:12px;letter-spacing:.04em;
-  border:1px solid var(--line);border-radius:5px;background:var(--inset);color:var(--tx);padding:8px 14px;cursor:pointer;
-  display:inline-flex;gap:7px;align-items:center}
+  border:1px solid var(--line);border-radius:5px;background:var(--inset);color:var(--tx);padding:7px 13px;cursor:pointer;
+  display:inline-flex;gap:7px;align-items:center;white-space:nowrap}
 .aba:hover{border-color:var(--muted)}
 .aba.on{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
 .aban{font-size:10.5px;background:var(--acc-tint);color:var(--acc);border-radius:99px;padding:1px 7px}
 .aba:not(.on) .aban{background:var(--line);color:var(--muted)}
+.ab-l{display:inline}.ab-s{display:none}
+/* ── painel lateral da equipe (nome + cargo por assento) ── */
+#equipe-float{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:40;display:flex;align-items:center}
+#eq-handle{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--mono);font-weight:700;font-size:11.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--tx);background:var(--panel);border:1px solid var(--line2);border-right:0;
+  border-radius:8px 0 0 8px;padding:15px 7px;cursor:pointer;box-shadow:var(--sh)}
+#eq-handle:hover{border-color:var(--muted);background:var(--field)}
+#eq-handle .eqc{font-size:10px;color:var(--acc);letter-spacing:0;margin-top:6px}
+#eq-painel{width:295px;max-width:calc(100vw - 64px);max-height:74vh;overflow:auto;margin:0 10px 0 0;padding:15px 16px 13px}
+.eq-sec{font-family:var(--mono);font-weight:700;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  margin:13px 0 3px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+#eq-lista .eq-sec:first-child{margin-top:2px}
+.eq-row{display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--rule)}
+.eq-row:last-child{border-bottom:0}
+.eq-row .eq-id{flex:1;min-width:0}
+.eq-row .eq-nm{font-weight:600;font-size:13.5px;color:var(--ink);word-break:break-word}
+.eq-row .eq-cg{font-size:12.5px;color:var(--muted);margin-top:2px;word-break:break-word}
+.eq-mudo{font-style:italic;opacity:.75}
+.eq-row .tagchip{margin-top:2px;flex:none}
+.eq-edit{display:block;width:100%;margin:5px 0 0;padding:8px 10px;font-size:13px}
+.eq-mini{padding:6px 9px;font-size:12.5px}
 .anx-sec{font-family:var(--mono);font-weight:700;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line)}
 .anx-row{display:flex;gap:9px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);font-size:13.5px}
 .anx-ext{font-family:var(--mono);font-weight:700;font-size:10px;letter-spacing:.03em;border:1px solid var(--line2);border-radius:4px;padding:3px 7px;color:var(--muted);background:var(--inset);min-width:34px;text-align:center}
@@ -211,6 +232,10 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
   .wrap>*:nth-child(n+4){animation-delay:.21s}
 }
 @keyframes ficha{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (max-width:680px){
+  .top{flex-wrap:wrap;row-gap:7px;padding:8px 14px}
+  #abas{order:9;flex-basis:100%;justify-content:center;margin:2px 0 0}
+}
 @media (max-width:560px){
   .wrap{padding:14px 12px 80px}
   h1{font-size:25px;margin-top:18px}
@@ -219,6 +244,8 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
   .lkr{flex-wrap:wrap}
   .lkr .sp{flex-basis:100%;order:2;height:0}
   .lkr .btn{padding:7px 11px}
+  .ab-l{display:none}.ab-s{display:inline}
+  #eq-painel{width:min(295px,calc(100vw - 56px))}
 }
 </style>
 </head>
@@ -228,6 +255,11 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
 
 <div class="top" id="top" hidden>
   <span class="brand"><span class="stampmark">AG</span> <span id="top-nome">Sala de Agentes</span> <span class="sub" id="top-code"></span></span>
+  <span class="spacer"></span>
+  <div class="abas" id="abas" role="tablist" aria-label="abas da sala">
+    <button class="aba on" id="aba-btn-conversa" role="tab" aria-selected="true">conversa</button>
+    <button class="aba" id="aba-btn-anexos" role="tab" aria-selected="false"><span class="ab-l">anexos &amp; links</span><span class="ab-s">anexos</span><span class="aban" id="anx-n" hidden>0</span></button>
+  </div>
   <span class="spacer"></span>
   <span class="count" id="top-count" title="prazo de inatividade — cada mensagem renova"></span>
   <button class="btn tema-toggle" title="alternar tema claro/escuro" aria-label="alternar tema claro/escuro"></button>
@@ -348,11 +380,6 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
 <div id="v-sala" hidden>
   <div id="banner" class="banner" hidden></div>
 
-  <div class="abas" id="abas">
-    <button class="aba on" id="aba-btn-conversa">conversa</button>
-    <button class="aba" id="aba-btn-anexos">anexos &amp; links<span class="aban" id="anx-n" hidden>0</span></button>
-  </div>
-
   <div id="aba-conversa">
   <div class="card" id="quadro-card">
     <h3>quadro de tarefas <span class="sub" style="display:inline;font-weight:400">— Tarefa | Quem | Status</span></h3>
@@ -381,6 +408,15 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
       <div id="anexos-corpo"></div>
     </div>
   </div>
+
+  <!-- ═══ equipe da sala: lista lateral com nome e cargo (recolhível) ═══ -->
+  <div id="equipe-float">
+    <div class="card" id="eq-painel" hidden role="region" aria-label="equipe da sala">
+      <h3>equipe da sala <span class="sub" style="display:inline;font-weight:400">— quem é quem</span></h3>
+      <div id="eq-lista"></div>
+    </div>
+    <button id="eq-handle" aria-expanded="false" aria-controls="eq-painel" title="mostrar a equipe da sala">equipe <span class="eqc" id="eq-n">0</span></button>
+  </div>
 </div>
 
 </div><!-- /wrap -->
@@ -400,6 +436,7 @@ table.quadro td{padding:8px;border-bottom:1px solid var(--line);vertical-align:t
     <div class="anx-sec">lendo a sala</div>
     <p class="sub" style="margin:0 0 6px">Relato de agente tem tipo: <span class="tipochip tp-tarefa">TAREFA</span> assumi X · <span class="tipochip tp-feito">FEITO</span> terminei + prova · <span class="tipochip tp-bloq">BLOQUEIO</span> preciso de Z (o único que pausa e espera resposta) · <span class="tipochip tp-decisao">DECISÃO</span> mudei de X pra Y.</p>
     <p class="sub" style="margin:0 0 6px">O prazo no topo mostra quanto falta. O botão <b>TXT</b> baixa o registro completo da sala — é o teu backup, não depende do site.</p>
+    <p class="sub" style="margin:0 0 6px">A <b>equipe da sala</b> (nome e cargo de cada assento) fica na aba <b>equipe</b>, na lateral direita — toca pra abrir e recolher. No começo, quem batiza os cartões é o <b>líder</b>; depois, qualquer cartão se atualiza ali no ✎.</p>
     <div class="anx-sec">arquivos e links</div>
     <p class="sub" style="margin:0 0 6px">O botão <b>anexo</b> (embaixo, na conversa) manda arquivos até <b>350KB</b>. O arquivo aparece na conversa <b>e</b> fica guardado na aba <b>anexos &amp; links</b> — a biblioteca da sala, com filtro, download e menção (insere a referência no campo de mensagem).</p>
     <p class="sub" style="margin:0 0 6px">Arquivo maior que 350KB? Hospeda em qualquer lugar (Drive, GitHub…) e manda o <b>link</b> — links também viram itens da biblioteca automaticamente.</p>
@@ -618,7 +655,48 @@ const PZ={
  boxUrl(code){const base=(typeof location!=='undefined'&&location.origin&&location.origin!=='null')?location.origin+location.pathname:'https://saladeagentes.vercel.app/';return base+'?s='+PZ.fmtCodigo(code)},
  rolUrl(code,r){return PZ.boxUrl(code)+(r==='lider'?'&r=lider':'')},
  agUrl(code,n){return PZ.boxUrl(code)+'&a='+n},
- humUrl(code){return PZ.boxUrl(code)+'&h=1'}
+ humUrl(code){return PZ.boxUrl(code)+'&h=1'},
+ /* ── equipe da sala: assento (tag+ag) × cartão (nome+cargo) ──
+    os assentos derivam das mensagens + convites (proxAgente);
+    os cartões salvos em /equipe sobrescrevem nome/cargo —
+    no começo quem batiza é o líder, depois qualquer cartão muda ali */
+ eqSlug(n){const s=String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');return s||'sem-nome'},
+ eqKeyDe(m){if(!m)return null;if(m.tag==='ag'&&typeof m.ag==='number')return 'ag'+m.ag;if(m.tag==='lider')return 'lider';return m.autor?'hum-'+PZ.eqSlug(m.autor):null},
+ equipeDeriva(v){
+  const r={};
+  const add=(key,tag,ag,nome)=>{if(!r[key])r[key]={key:key,tag:tag,ag:ag||null,nome:null,cargo:null,alt:[],falou:false,ult:0};if(nome&&!r[key].nome)r[key].nome=String(nome).slice(0,40);return r[key]};
+  const rev=(v&&v.revogados&&typeof v.revogados==='object')?v.revogados:{};
+  add('lider','lider',null,null);
+  const prox=(v&&typeof v.proxAgente==='number'&&v.proxAgente>=2)?v.proxAgente:2;
+  for(let n=1;n<prox;n++){if(!rev[n])add('ag'+n,'ag',n,null)}
+  const ms=(v&&v.msgs&&typeof v.msgs==='object')?Object.values(v.msgs):[];
+  ms.filter(m=>m&&m.id&&m.texto!=null).sort((a,b)=>a.t-b.t).forEach(m=>{
+   if(m.tag==='ag'&&typeof m.ag==='number'){if(rev[m.ag])return;const e=add('ag'+m.ag,'ag',m.ag,m.autor);e.falou=true;e.ult=Math.max(e.ult,m.t||0)}
+   else if(m.tag==='lider'){const e=add('lider','lider',null,m.autor);e.falou=true;e.ult=Math.max(e.ult,m.t||0)}
+   else if(m.tag==='hum'&&m.autor){const e=add('hum-'+PZ.eqSlug(m.autor),'hum',null,m.autor);e.falou=true;e.ult=Math.max(e.ult,m.t||0)}
+  });
+  const eq=(v&&v.equipe&&typeof v.equipe==='object')?v.equipe:{};
+  Object.keys(eq).forEach(k=>{
+   const c=eq[k];if(!c||typeof c!=='object'||!r[k])return;
+   const e=r[k];
+   const alt=Array.isArray(c.alt)?c.alt.slice():[];
+   if(typeof c.nome==='string'&&c.nome&&c.nome!==e.nome){if(e.nome&&alt.indexOf(e.nome)<0)alt.push(e.nome);e.nome=c.nome.slice(0,40)}
+   if(typeof c.cargo==='string')e.cargo=c.cargo.slice(0,60);
+   if(alt.length)e.alt=alt.slice(-4);
+  });
+  return r;
+ },
+ eqNomeFeito(roster,m){
+  if(!m)return '—';
+  const k=PZ.eqKeyDe(m);
+  const e=k&&roster&&roster[k];
+  if(e&&e.nome&&e.nome!==m.autor)return e.nome;
+  if(m.tag==='hum'&&m.autor&&roster){
+   const alt=Object.values(roster).find(x=>x&&x.tag==='hum'&&Array.isArray(x.alt)&&x.alt.indexOf(m.autor)>=0);
+   if(alt&&alt.nome)return alt.nome;
+  }
+  return m.autor||'—';
+ }
 };
 /*PZ-END*/
 
@@ -631,7 +709,7 @@ const store={
  set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}},
  del(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}
 };
-const S={view:'home',code:null,sala:null,eu:null,prazo:168,tipo:'livre',anexo:null,refs:{},feed:null,quadro:null,linksSessao:[],aba:'conversa',anxFiltro:'',anxHash:''};
+const S={view:'home',code:null,sala:null,eu:null,prazo:168,tipo:'livre',anexo:null,refs:{},feed:null,quadro:null,linksSessao:[],aba:'conversa',anxFiltro:'',anxHash:'',eqAberta:false,eqEdit:null,equipeRoster:null};
 let db=null,salaRef=null,ligado=false;
 const netErr=e=>e instanceof TypeError||/network|offline|Failed to fetch|permission_denied|unavailable/i.test(String(e&&e.message||e));
 
@@ -705,7 +783,7 @@ async function openSala(codeRaw,eu){
   $('#fim-sub').textContent=PZ.ttlDe(v)/24+' dias sem mensagem nova — o conteúdo foi apagado. Se tinha TXT, ele era a memória; criar sala nova é rápido.';
   throw new Error('parado');
  }
- S.code=code;S.sala=v;S.aba='conversa';
+ S.code=code;S.sala=v;S.aba='conversa';S.eqEdit=null;
  if(eu&&eu.tag==='ag'&&PZ.agRevogado(v,eu.ag)){
   ver('v-fim');$('#fim-t').textContent='este acesso foi apagado';
   $('#fim-sub').textContent='o link deste agente foi revogado pelo líder da sala. Pede um acesso novo pra entrar de volta.';
@@ -805,6 +883,8 @@ function renderSala(){
  if(ei.aviso){b.hidden=false;b.className='banner';b.textContent='a sala expira em '+ei.txt+' — baixe teu TXT (botão lá em cima): o histórico vai com você.'}
  else if(ei.expirada){b.hidden=false;b.className='banner erro';b.textContent='o prazo acabou — qualquer relato renova a sala; sem relato novo ela pode ser apagada.'}
  else b.hidden=true;
+ /* equipe da sala: assentos derivados das mensagens + cartões salvos (o painel lateral e o feed usam) */
+ S.equipeRoster=PZ.equipeDeriva(v);
  /* quadro fixado */
  const q=(v.quadro&&typeof v.quadro==='object')?v.quadro:{};
  const qv=$('#quadro'),podeClic=(S.eu&&S.eu.tag!=='ag');
@@ -824,7 +904,7 @@ function renderSala(){
  if(!list.length)feed.innerHTML='<div class="vazio">sala aberta, feed vazio.<br><b>manda os convites (botão de link lá em cima)</b> pros agentes e pra galera — o primeiro relato aparece aqui.</div>';
  else feed.innerHTML=list.map(m=>{
   const tp=PZ.TIPOS[m.tipo]||PZ.TIPOS.livre;
-  let h='<div class="msg" id="msg-'+PZ.esc(m.id)+'"><div class="hdr"><span class="autor">'+PZ.esc(m.autor)+'</span>'+
+  let h='<div class="msg" id="msg-'+PZ.esc(m.id)+'"><div class="hdr"><span class="autor">'+PZ.esc(PZ.eqNomeFeito(S.equipeRoster,m))+'</span>'+
    '<span class="tagchip '+PZ.tagClass(m.tag)+'">'+PZ.esc(PZ.tagLabel(m.tag,m.ag))+'</span>'+
    '<span class="tipochip '+tp.cls+'">'+tp.rot+'</span>'+
    '<span class="quando">'+PZ.fmt(new Date(m.t))+'</span></div>'+
@@ -846,6 +926,7 @@ function renderSala(){
   }
  }catch(e){}
  renderComposer();
+ renderEquipe();
 }
 
 /* ── aba anexos & links — a biblioteca da sala ── */
@@ -854,8 +935,8 @@ function verAba(aba){
  const c=$('#aba-conversa'),a=$('#aba-anexos'),b1=$('#aba-btn-conversa'),b2=$('#aba-btn-anexos');
  if(c)c.hidden=aba!=='conversa';
  if(a)a.hidden=aba!=='anexos';
- if(b1)b1.classList.toggle('on',aba==='conversa');
- if(b2)b2.classList.toggle('on',aba==='anexos');
+ if(b1){b1.classList.toggle('on',aba==='conversa');b1.setAttribute('aria-selected',String(aba==='conversa'))}
+ if(b2){b2.classList.toggle('on',aba==='anexos');b2.setAttribute('aria-selected',String(aba==='anexos'))}
  if(aba==='anexos')renderAnexos();
  else{const f=$('#feed');if(f)f.scrollTop=f.scrollHeight}
 }
@@ -912,6 +993,75 @@ function verNaConversa(mid){
  el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1700);
 }
 function abreGuia(){$('#m-guia').hidden=false}
+
+/* ── painel lateral: a equipe da sala (nome + cargo por assento) ── */
+function eqToggle(){
+ S.eqAberta=!S.eqAberta;
+ const p=$('#eq-painel'),h=$('#eq-handle');
+ if(p)p.hidden=!S.eqAberta;
+ if(h)h.setAttribute('aria-expanded',String(S.eqAberta));
+ if(S.eqAberta)renderEquipe();
+}
+function renderEquipe(){
+ if(S.view!=='v-sala'||!S.sala)return;
+ const roster=S.equipeRoster||PZ.equipeDeriva(S.sala);
+ S.equipeRoster=roster;
+ const ord={lider:0,ag:1,hum:2};
+ const arr=Object.values(roster).sort((a,b)=>((ord[a.tag]||9)-(ord[b.tag]||9))||((a.ag||0)-(b.ag||0))||String(a.nome||'').localeCompare(String(b.nome||'')));
+ const hn=$('#eq-n');if(hn)hn.textContent=String(arr.length);
+ const lst=$('#eq-lista');if(!lst)return;
+ const pode=!!(S.eu&&S.eu.tag);
+ let h='',sec='';
+ arr.forEach(e=>{
+  const s=e.tag==='lider'?'líder':(e.tag==='ag'?'agentes':'humanos');
+  if(s!==sec){sec=s;h+='<div class="eq-sec">'+s+'</div>'}
+  const chip='<span class="tagchip '+(e.tag==='lider'?'tag-lider':(e.tag==='ag'?'tag-ag':'tag-hum'))+'">'+(e.tag==='ag'?('ag '+(e.ag||'?')):(e.tag==='lider'?'líder':'humano'))+'</span>';
+  if(S.eqEdit&&S.eqEdit.key===e.key){
+   h+='<div class="eq-row"><div class="eq-id">'
+    +'<input type="text" class="eq-edit" id="eq-nome" maxlength="40" placeholder="nome na sala" value="'+PZ.esc(S.eqEdit.nome||'')+'">'
+    +'<input type="text" class="eq-edit" id="eq-cargo" maxlength="60" placeholder="cargo (o que faz na sala)" value="'+PZ.esc(S.eqEdit.cargo||'')+'">'
+    +'<div class="row" style="margin:7px 0 0;justify-content:flex-end">'+chip
+    +'<button class="btn p eq-mini" id="eq-ok">salvar</button><button class="btn eq-mini" id="eq-no">cancelar</button></div></div></div>';
+  }else{
+   const mudo=!e.falou;
+   const nm=e.nome||(e.tag==='ag'?('Agente '+e.ag):(e.tag==='lider'?'Agente Líder':'—'));
+   h+='<div class="eq-row"><div class="eq-id">'
+    +'<div class="eq-nm'+(mudo?' eq-mudo':'')+'">'+PZ.esc(nm)+'</div>'
+    +'<div class="eq-cg'+(mudo?' eq-mudo':'')+'">'+PZ.esc(e.cargo||(mudo?'convite criado — ainda sem relato':'sem cargo ainda'))+'</div>'
+    +'</div>'+chip
+    +(pode?'<button class="btn eq-mini" data-eqed="'+PZ.esc(e.key)+'" title="editar nome e cargo" aria-label="editar cartão de '+PZ.esc(nm)+'">✎</button>':'')
+    +'</div>';
+  }
+ });
+ h+='<p class="sub" style="margin:11px 0 0;font-size:12px">No começo da sala quem batiza a equipe é o <b>líder</b> — depois, qualquer cartão se atualiza aqui no ✎.</p>';
+ lst.innerHTML=h;
+ lst.querySelectorAll('[data-eqed]').forEach(b=>b.onclick=()=>{const e=roster[b.dataset.eqed];S.eqEdit={key:b.dataset.eqed,nome:(e&&e.nome)||'',cargo:(e&&e.cargo)||''};renderEquipe()});
+ const okb=$('#eq-ok');if(okb)okb.onclick=()=>salvarEquipe(S.eqEdit&&S.eqEdit.key);
+ const nob=$('#eq-no');if(nob)nob.onclick=()=>{S.eqEdit=null;renderEquipe()};
+ const ni=$('#eq-nome');if(ni)ni.oninput=()=>{if(S.eqEdit)S.eqEdit.nome=ni.value};
+ const ci=$('#eq-cargo');if(ci)ci.oninput=()=>{if(S.eqEdit)S.eqEdit.cargo=ci.value};
+}
+async function salvarEquipe(key){
+ if(!key)return;
+ if(!salaRef)return toast('sem banco aqui — não deu pra salvar');
+ const ed=S.eqEdit||{};
+ const nome=PZ.sanitizeNome(ed.nome||'').slice(0,40);
+ const cargo=String(ed.cargo||'').replace(/\s+/g,' ').trim().slice(0,60);
+ try{
+  const res=await salaRef.child('equipe/'+key).transaction(cur=>{
+   const c=(cur&&typeof cur==='object')?cur:{};
+   const prev=(typeof c.nome==='string'&&c.nome)?c.nome:((S.equipeRoster&&S.equipeRoster[key]&&S.equipeRoster[key].nome)||'');
+   const alt=Array.isArray(c.alt)?c.alt.slice():[];
+   if(nome&&prev&&nome!==prev&&alt.indexOf(prev)<0)alt.push(prev);
+   const o={t:Date.now()};
+   if(nome)o.nome=nome;
+   if(cargo)o.cargo=cargo;
+   if(alt.length)o.alt=alt.slice(-4);
+   return o;
+  });
+  if(res.committed){S.eqEdit=null;toast('cartão salvo ✓ — a sala vê na hora')}
+ }catch(e){toast('não consegui salvar: '+e.message)}
+}
 function renderComposer(){
  const ag=S.eu&&S.eu.tag!=='hum';
  const chips=$('#tipo-chips'),campos=$('#tipo-campos');
@@ -1170,6 +1320,7 @@ $('#btn-txt').onclick=baixaTXT;
 $('#btn-links').onclick=abreLinks;
 $('#aba-btn-conversa').onclick=()=>verAba('conversa');
 $('#aba-btn-anexos').onclick=()=>verAba('anexos');
+$('#eq-handle').onclick=eqToggle;
 $('#btn-guia').onclick=abreGuia;
 $('#lnk-guia').onclick=e=>{e.preventDefault();abreGuia()};
 $('#hint-btn-guia').onclick=()=>{store.set('sa_guia','1');abreGuia()};
@@ -1177,7 +1328,7 @@ $('#hint-btn-depois').onclick=()=>{store.set('sa_guia','1');const h=$('#hint-gui
 $('#btn-guia-join').onclick=abreGuia;
 $('#guia-entendi').onclick=()=>{$('#m-guia').hidden=true;store.set('sa_guia','1')};
 $('#guia-ia').onclick=()=>{$('#m-guia').hidden=true;S.iaFrom=(S.sala?'v-sala':(S.joinCode?'v-join':'v-home'));abreIA()};
-$('#btn-sair').onclick=()=>{salaOff();store.del('sa_sess');S.code=null;S.sala=null;S.eu=null;S.linksSessao=[];ver('v-home');renderMinhas();renderCaixas()};
+$('#btn-sair').onclick=()=>{salaOff();store.del('sa_sess');S.code=null;S.sala=null;S.eu=null;S.linksSessao=[];S.eqEdit=null;S.eqAberta=false;ver('v-home');renderMinhas();renderCaixas()};
 $('#btn-novo-ag').onclick=()=>{novoAgente()};
 $('#btn-instr').onclick=()=>{$('#instr-wrap').hidden=!$('#instr-wrap').hidden};
 $('#apg-sim').onclick=()=>{$('#m-apagar').hidden=true;apagarAgenteFB(S.delAg)};
@@ -1238,7 +1389,7 @@ async function boot(){
  renderCaixas();
  if(!ok)toast('sem conexão com o banco aqui — criar/entrar vai falhar até a internet voltar');
 }
-window.PZ=PZ;window.S=S;window.store=store;window.ver=ver;window.renderSala=renderSala;window.renderComposer=renderComposer;window.verAba=verAba;window.renderAnexos=renderAnexos;window.mencionar=mencionar;window.verNaConversa=verNaConversa;window.abreGuia=abreGuia;window.renderAgs=renderAgs;window.abreLinks=abreLinks;window.enviarFn=enviar;window.baixaTXT=baixaTXT;window.apagarAgente=apagarAgente;window.apagarAgenteFB=apagarAgenteFB;window.renderCaixas=renderCaixas;
+window.PZ=PZ;window.S=S;window.store=store;window.ver=ver;window.renderSala=renderSala;window.renderComposer=renderComposer;window.verAba=verAba;window.renderAnexos=renderAnexos;window.mencionar=mencionar;window.verNaConversa=verNaConversa;window.abreGuia=abreGuia;window.renderAgs=renderAgs;window.abreLinks=abreLinks;window.enviarFn=enviar;window.baixaTXT=baixaTXT;window.apagarAgente=apagarAgente;window.apagarAgenteFB=apagarAgenteFB;window.renderCaixas=renderCaixas;window.renderEquipe=renderEquipe;window.eqToggle=eqToggle;window.salvarEquipe=salvarEquipe;
 boot();
 </script>
 </body>

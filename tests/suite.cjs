@@ -2,7 +2,9 @@
    🎛️ Suíte de consistência — Sala de Agentes (coordenação entre IAs)
    Testa o protocolo de relato (TAREFA/FEITO/BLOQUEIO/DECISÃO),
    a prova obrigatória do FEITO, o quadro fixado, o prazo de
-   inatividade, o TXT de exportação, os links por papel e o render.
+   inatividade, o TXT de exportação, os links por papel, o render,
+   as abas na barra do topo e o painel lateral da equipe
+   (nome + cargo por assento).
    ============================================================ */
 const { JSDOM } = require('jsdom');
 const fs = require('fs');
@@ -200,6 +202,42 @@ ok(PZ.caixaTtl({ttlHoras:24}) === 24 && PZ.caixaTtl({ttlHoras:500}) === 168, 'tt
 ok(PZ.caixaUrl('8MZP6JDW') === 'https://caixa-agente.vercel.app/?c=8MZP-6JDW', 'abre a caixa no caixa-agente');
 ok(PZ.caixaFmt('TESTCA1X') === 'TEST-CA1X', 'código de teste de 8 formata');
 
+secao('CORE: equipe da sala (assentos × cartões de nome+cargo)');
+ok(PZ.eqSlug('Luke') === 'luke', 'slug de nome simples');
+ok(PZ.eqSlug('Ação & Foo!') === 'acao-foo', 'slug derruba acento e pontuação');
+ok(PZ.eqKeyDe({tag:'ag',ag:2}) === 'ag2', 'chave de assento de agente numerado');
+ok(PZ.eqKeyDe({tag:'lider'}) === 'lider', 'chave do assento do líder');
+ok(PZ.eqKeyDe({tag:'hum',autor:'Luke'}) === 'hum-luke', 'chave de humano sai do nome');
+ok(PZ.eqKeyDe(null) === null, 'mensagem nula não tem chave (não quebra)');
+const vEq = {proxAgente:3, msgs:{
+  m1:{id:'m1',t:1,texto:'a',autor:'Zé Líder',tag:'lider',tipo:'livre'},
+  m2:{id:'m2',t:2,texto:'a',autor:'A1',tag:'ag',ag:1,tipo:'tarefa'},
+  m3:{id:'m3',t:3,texto:'a',autor:'Luke',tag:'hum',tipo:'livre'}
+}};
+const ros1 = PZ.equipeDeriva(vEq);
+ok(ros1.lider && ros1.lider.falou && ros1.lider.nome === 'Zé Líder', 'líder derivado das mensagens');
+ok(ros1.ag1 && ros1.ag1.falou && ros1.ag1.nome === 'A1', 'agente 1 derivado da mensagem');
+ok(ros1['hum-luke'] && ros1['hum-luke'].falou && ros1['hum-luke'].nome === 'Luke', 'humano derivado com chave de slug');
+ok(ros1.ag2 && ros1.ag2.falou === false, 'agente convidado (proxAgente) aparece mudo, sem relato');
+ok(Object.keys(ros1).length === 4, 'equipe completa: líder + ag1 + ag2 (convite) + humana');
+const vEq2 = JSON.parse(JSON.stringify(vEq));
+vEq2.equipe = {ag1:{nome:'A1·Arquiteto',cargo:'arquitetura do repo'}};
+const ros2 = PZ.equipeDeriva(vEq2);
+ok(ros2.ag1.nome === 'A1·Arquiteto' && ros2.ag1.cargo === 'arquitetura do repo', 'cartão salvo sobrescreve nome e cargo');
+ok((ros2.ag1.alt||[]).indexOf('A1') >= 0, 'nome antigo fica no histórico alt (renomeação honesta)');
+ok(ros2.ag2.nome === null, 'cartão de um assento não vaza pros outros');
+ok(PZ.eqNomeFeito(ros2,{tag:'ag',ag:1,autor:'A1'}) === 'A1·Arquiteto', 'feed mostra o nome do cartão no assento');
+ok(PZ.eqNomeFeito(ros2,{tag:'ag',ag:2,autor:'—'}) === '—', 'sem cartão e sem autor: não inventa');
+const vEq3 = JSON.parse(JSON.stringify(vEq2));
+vEq3.equipe['hum-luke'] = {nome:'Luke Palys',cargo:'dono e testador'};
+const ros3 = PZ.equipeDeriva(vEq3);
+ok(PZ.eqNomeFeito(ros3,{tag:'hum',autor:'Luke'}) === 'Luke Palys', 'humano renomeado: mensagens antigas mostram o nome novo');
+ok(PZ.eqNomeFeito(ros3,{tag:'lider',autor:'Zé Líder'}) === 'Zé Líder', 'sem cartão, autor original intacto');
+const vEq4 = JSON.parse(JSON.stringify(vEq));vEq4.revogados = {2:true};
+ok(!PZ.equipeDeriva(vEq4).ag2, 'agente revogado sai da equipe');
+ok(PZ.equipeDeriva(vEq4).ag1 && PZ.equipeDeriva(vEq4).ag1.falou, 'revogação só tira o alvo');
+ok(PZ.equipeDeriva({}) && PZ.equipeDeriva({}).lider, 'sala vazia ainda tem o assento do líder');
+
 /* ═══ DOM ═══ */
 secao('DOM: home e boot');
 const { VirtualConsole } = require('jsdom');
@@ -275,6 +313,37 @@ ok($('#aba-conversa').hidden === false && !!$('#msg-bbb'), 'ver na conversa volt
 w.S.anxFiltro = 'nada-bate';w.renderAnexos();await tick(10);
 ok($('#anexos-corpo').textContent.indexOf('nada bate com o filtro') >= 0, 'filtro sem resultado honesto');
 w.S.anxFiltro = '';
+
+secao('DOM: abas na barra do topo + painel lateral da equipe');
+ok($('#top #abas') && $('#top #aba-btn-conversa') && $('#top #aba-btn-anexos'), 'abas conversa/anexos moram na barra do topo, no meio');
+ok($('#v-sala #abas') === null, 'a faixa de abas antiga (dentro da sala) saiu');
+ok($('#aba-btn-anexos .ab-l') && $('#aba-btn-anexos .ab-s'), 'botão anexos com rótulo longo (desktop) e curto (mobile)');
+ok($('#anx-n') && $('#top #anx-n'), 'badge da biblioteca acompanhou o botão pro topo');
+ok($('#equipe-float') && $('#eq-handle') && $('#eq-painel') && $('#eq-lista'), 'painel da equipe existe (lateral, recolhível)');
+ok($('#eq-painel').hidden === true && $('#eq-handle').getAttribute('aria-expanded') === 'false', 'painel começa recolhido');
+$('#eq-handle').click();await tick(10);
+ok($('#eq-painel').hidden === false && $('#eq-handle').getAttribute('aria-expanded') === 'true', 'handle expande o painel');
+ok($('#eq-lista').textContent.indexOf('Ada') >= 0 && $('#eq-lista').textContent.indexOf('Lin') >= 0, 'assentos ag1/ag2 com os nomes da fixture');
+ok($('#eq-lista').textContent.indexOf('Ana') >= 0, 'humana da fixture aparece na lista');
+ok($('#eq-lista').textContent.indexOf('sem cargo ainda') >= 0, 'cargo vazio é honesto (não inventa)');
+ok($('#eq-lista').textContent.indexOf('líder') >= 0 && $('#eq-lista').textContent.indexOf('agentes') >= 0 && $('#eq-lista').textContent.indexOf('humanos') >= 0, 'seções: líder · agentes · humanos');
+ok($('#eq-n').textContent === '4', 'badge do handle conta a equipe (líder + ag1 + ag2 + humana)');
+const bEd = $('#eq-lista [data-eqed]');
+ok(!!bEd, 'cartão é editável pra quem entrou na sala');
+bEd.click();await tick(10);
+ok(!!$('#eq-nome') && !!$('#eq-cargo'), 'editor inline abre com nome e cargo');
+$('#eq-nome').value = 'Ada Lovelace';$('#eq-nome').dispatchEvent(new w.Event('input'));
+ok(w.S.eqEdit.nome === 'Ada Lovelace', 'o que foi digitado vai pro estado do editor');
+$('#eq-no').click();await tick(10);
+ok(!$('#eq-nome'), 'cancelar fecha o editor sem salvar');
+w.S.sala.equipe = {ag1:{nome:'Ada Lovelace',cargo:'primeira programadora',alt:['Ada']}};
+w.renderSala();await tick(20);
+ok($('#feed').textContent.indexOf('Ada Lovelace') >= 0, 'feed mostra o nome do cartão no assento (renomeação vale)');
+ok($('#eq-lista').textContent.indexOf('primeira programadora') >= 0, 'cargo do cartão aparece na lista');
+delete w.S.sala.equipe;w.renderSala();await tick(10);
+ok($('#feed').textContent.indexOf('Ada Lovelace') < 0, 'sem cartão, o feed volta pro autor original');
+$('#eq-handle').click();await tick(10);
+ok($('#eq-painel').hidden === true, 'handle recolhe o painel de volta');
 
 secao('DOM: guia de uso (pra quem não conhece o site)');
 ok($('#m-guia') && $('#m-guia').hidden === true, 'modal do guia começa fechado');
